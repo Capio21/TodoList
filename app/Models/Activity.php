@@ -5,17 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MyToDoList extends Model
+class Activity extends Model
 {
     use HasFactory;
-
+    
     protected $fillable = [
-        'mytodolist_title',
-        'description',
-        'time',
-        'date',
-        'status',
-        'archived',
-        'user_id',
+        'title', 'description', 'date_started', 'due_date', 'tags', 'status', 'archive'
     ];
 }

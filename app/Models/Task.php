@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Task extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'user_id',
+        'description',
+        'time_started',
+        'time_ended',
+        'deadline',
+        'status',
+        'tags',
+        'archive',
+    ];
+
+    // If you're planning to use custom date formats for time fields, you can add this:
+    protected $dates = [
+        'time_started',
+        'time_ended',
+        'deadline',
+    ];
+}

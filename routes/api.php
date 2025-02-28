@@ -4,7 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
+use App\Http\Controllers\AdminProjectController;
 use App\Http\Controllers\MyToDoListController;
+use App\Http\Controllers\ActivityController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -31,12 +33,13 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 // login / register
 Route::post('/register', [AuthController::class, 'register']);
-
+Route::post('/Adminregister', [AuthController::class, 'Adminregister']);
 Route::get('/show', [AuthController::class, 'show']);
 
 Route::get('/users', [AuthController::class, 'index']);
 
 Route::get('/users', [AuthController::class, 'getUsers']);
+Route::get('/admins', [AuthController::class, 'getAdmins']);
 
 
 
@@ -61,6 +64,7 @@ Route::put('/tasks/{id}/restore', [MyToDoListController::class, 'restore']);
 
 Route::put('/tasks/{id}/archive', [MyToDoListController::class, 'archive']); // Archive task
 Route::put('/tasks/{id}/unarchive', [MyToDoListController::class, 'unarchive']); // Unarchive task
+Route::get('/tasks/{id}/unarchive', [MyToDoListController::class, 'unarchive']); // Unarchive task
 
 Route::put('/tasks/{id}/mark-done', [MyToDoListController::class, 'markAsDone']);
 
@@ -75,5 +79,42 @@ Route::middleware('auth:sanctum')->post('/update-profile', [AuthController::clas
 
 
 
+
+// adminproject
+
+
+Route::get('tasks', [AdminProjectController::class, 'index']);
+Route::get('notArchive', [AdminProjectController::class, 'notArchive']);
+Route::get('tasks/{id}', [AdminProjectController::class, 'show']);
+Route::post('tasks', [AdminProjectController::class, 'store']);
+Route::put('tasks/{id}', [AdminProjectController::class, 'update']);
+Route::delete('tasks/{id}', [AdminProjectController::class, 'destroy']);
+Route::post('/getUserId', [AdminProjectController::class, 'getUserId']);
+Route::patch('tasks/{taskId}/markAsDone', [AdminProjectController::class, 'markAsDone']);
+
+
+Route::delete('tasks/{taskId}', [AdminProjectController::class, 'deleteTask']);
+Route::put('/tasks/{id}/archive', [AdminProjectController::class, 'archiveTask']);
+
+Route::get('tasks/{taskId}/edit', [AdminProjectController::class, 'editTask']);
+Route::put('tasks/{taskId}', [AdminProjectController::class, 'updateTask']);
+
+Route::put('/tasks/{id}/restore', [AdminProjectController::class, 'restoreTask']);
+Route::delete('/tasks/{id}', [AdminProjectController::class, 'deleteTasks']);
+
+// Route::get('/tasks/archived', [AdminProjectController::class, 'archivedTasks']);
+Route::get('/archived-tasks', [AdminProjectController::class, 'getArchivedTasks']); 
+Route::put('/tasks/restore/{id}', [AdminProjectController::class, 'restore']);
+
+
+// Acitvity
+
+
+
+// Route::put('activity/{activity}/archive', [ActivityController::class, 'archive']);
+
+Route::apiResource('activities', ActivityController::class);
+
+Route::put('/activities/{id}/archive', [ActivityController::class, 'archive']);
 
 

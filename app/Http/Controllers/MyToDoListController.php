@@ -57,18 +57,23 @@ class MyToDoListController extends Controller
         return response()->json(['message' => 'Task archived successfully']);
     }
 
-    // Unarchive Task
     public function unarchive($id)
     {
-        $task = MyToDoList::find($id);
+        $task = MyToDoList::where('id', $id)->first(); // Use '=' instead of '->', and 'first()' instead of 'get()'
+    
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
-        $task->archived = false;
+    
+        $task->archived = 0;
         $task->save();
-
-        return response()->json(['message' => 'Task unarchived successfully']);
+    
+        return response()->json([
+            'message' => 'Task unarchived successfully',
+            'task' => $task
+        ]);
     }
+    
 
     public function markAsDone($id)
 {

@@ -13,9 +13,20 @@ class AuthController extends Controller
 {
     public function getUsers()
     {
-        $users = User::all();
-        return response()->json($users);
+        // Filter users by usertype 'admin'
+        $adminUsers = User::where('usertype', 'user')->get();
+        
+        return response()->json($adminUsers);
     }
+
+    public function getAdmins()
+    {
+        // Filter users by usertype 'admin'
+        $adminUsers = User::where('usertype', 'admin')->get();
+        
+        return response()->json($adminUsers);
+    }
+    
 
     public function index()
     {
@@ -70,6 +81,62 @@ class AuthController extends Controller
             'token' => $token,
         ], 201);
     }
+
+    public function Adminregister(Request $request)
+    {
+        // Validation rules
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string|max:255|unique:users,username',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed', // Ensuring password confirmation
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Validate image upload
+        ]);
+        
+        
+
+        // If validation fails, return errors
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Handle file upload for profile image
+            $imagePath = null;
+            if ($request->hasFile('profile_image')) {
+                $image = $request->file('profile_image');
+                
+                // Generate a unique filename
+                $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                
+                // Move the file to the public directory (public/profile_images)
+                $imagePath = 'profile_images/' . $imageName;
+                $image->move(public_path('profile_images'), $imageName);
+            }
+
+            // Create the admin user
+            $user = User::create([
+                'username' => trim($request->username),
+                'email' => trim($request->email),
+                'password' => Hash::make($request->password),
+                'profile_image' => $imagePath, // Save the relative public path of the image
+                'usertype' => 'admin', // Default user type
+            ]);
+
+            // Generate token
+            $token = $user->createToken('authToken')->plainTextToken;
+
+            // Return response with the token and user data
+            return response()->json([
+                'message' => 'Admin registered successfully!',
+                'user' => $user,
+                'token' => $token,
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
+        }
+    }
+
     
 
     public function login(Request $request)
@@ -98,7 +165,8 @@ class AuthController extends Controller
         // Return the response with the user details and generated token
         return response()->json([
             'user' => $user,
-            'token' => $token
+            'token' => $token,
+            'usertype' => $user->usertype
         ]);
     }
 
