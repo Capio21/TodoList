@@ -73,15 +73,16 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>Dashboard | Infi-Admin</title>
+        <title>Users List | Infi-Admin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div className="flex min-h-screen bg-gray-900 text-white">
-        {/* Sidebar */}
         <aside className="w-64 bg-gray-800 p-6 flex flex-col justify-between border-r border-blue-500">
           <div>
-            <h1 className="text-2xl font-bold text-blue-400 text-center mb-6">Infi-Admin</h1>
+            <h1 className="text-2xl font-bold text-blue-400 text-center mb-6">
+              Infi-Admin
+            </h1>
             <nav className="space-y-4">
               <button
                 onClick={() => router.push("/DashBoard")}
@@ -101,16 +102,24 @@ export default function Dashboard() {
               >
                 👥 User List
               </button>
+              <button
+                onClick={() => router.push("/Userlist/AdminReg")}
+                className="w-full text-left bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded transition"
+              >
+                🛠️ Admin Register
+              </button>
+              
             </nav>
           </div>
 
-          {/* 🚀 Logout Button (Opens Modal) */}
           <button
-            onClick={() => setShowLogoutModal(true)}
-            className="w-full bg-red-600 hover:bg-red-500 py-2 px-4 rounded transition mt-6"
+            onClick={handleLogout}
+            className="w-full bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded transition mt-4"
           >
             🚪 Logout
           </button>
+
+        
         </aside>
 
         {/* Main Content */}
