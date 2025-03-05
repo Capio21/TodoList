@@ -3,43 +3,73 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ActivityController extends Controller
 {
     // Fetch all activities (including filtering by status)
-    public function index(Request $request)
+    public function index(Request $request, $authToken)
     {
-        $query = Activity::query();
-
+        // Get token from request header
+        // $authToken = $request->header('Authorization');
+    
+        // if (!$authToken) {
+        //     return response()->json(['message' => 'Unauthorized'], 401);
+        // }
+    
+        // Find user by the token in the User model
+        $user = User::where('authToken', $authToken)->first();
+    
+        if (!$user) {
+            return response()->json(['message' => 'Invalid token'], 401);
+        }
+    
+        // Fetch activities belonging to the authenticated user
+        $query = Activity::where('user_id', $user->id);
+    
+        // Optional: Filter by status if provided
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-
+    
         return response()->json($query->get(), 200);
+    }
+
+    public function getUserByToken($authToken)
+    {
+        $user = User::where('authToken', $authToken)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid token'], 401);
+        }
+
+        return response()->json(['id' => $user->id], 200);
     }
 
     // Store a new activity
     public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'title' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'date_started' => 'required|date',
-        'due_date' => 'required|date|after_or_equal:date_started',
-        'tags' => 'nullable|string',
-        'status' => 'required|in:pending,complete,overdue',
-        'archive' => 'boolean',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'date_started' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:date_started',
+            'tags' => 'nullable|string',
+            'status' => 'required|in:pending,complete,overdue',
+            'archive' => 'boolean',
+            'user_id' => 'required|exists:users,id' // Ensure the user exists
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+    
+        $activity = Activity::create($request->all());
+        return response()->json($activity, 201);
     }
-
-    $activity = Activity::create($request->all());
-    return response()->json($activity, 201);
-}
+    
 
 
     // Show a single activity
@@ -58,7 +88,7 @@ class ActivityController extends Controller
     {
         try {
             $activity = Activity::findOrFail($id);
-
+    
             $validator = Validator::make($request->all(), [
                 'title' => 'sometimes|required|string|max:255',
                 'description' => 'nullable|string',
@@ -67,18 +97,20 @@ class ActivityController extends Controller
                 'tags' => 'nullable|string',
                 'status' => 'sometimes|required|in:pending,complete,overdue',
                 'archive' => 'boolean',
+                'user_id' => 'required|exists:users,id' // Ensure user exists
             ]);
-
+    
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-
+    
             $activity->update($request->all());
             return response()->json($activity, 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Activity not found or failed to update'], 500);
         }
     }
+    
 
     // Delete an activity
     public function destroy($id)
@@ -93,14 +125,19 @@ class ActivityController extends Controller
     }
 
     // Archive an activity
-    public function archive($id, Request $request)
+    public function archiveActivity($id)
     {
-        $activity = Activity::findOrFail($id);
-        $activity->archive = $request->archive;
-        $activity->save();
+        try {
+            $activity = Activity::findOrFail($id);
+            $activity->archive = 1; // Set archive to 1
+            $activity->save();
     
-        return response()->json(['message' => 'Activity archive status updated successfully!', 'activity' => $activity]);
+            return response()->json(['message' => 'Activity archived successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error archiving activity', 'message' => $e->getMessage()], 500);
+        }
     }
+    
     
 
     // Unarchive an activity
@@ -114,4 +151,31 @@ class ActivityController extends Controller
             return response()->json(['error' => 'Activity not found or failed to unarchive'], 500);
         }
     }
+
+    public function markAsDone($id)
+{
+    try {
+        $activity = Activity::findOrFail($id);
+        $activity->status = 'complete';
+        $activity->save();
+
+        return response()->json(['message' => 'Activity marked as done successfully'], 200);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Error marking activity as done', 'message' => $e->getMessage()], 500);
+    }
+}
+
+public function restore($id)
+{
+    $activity = Activity::where('id', $id)->where('archive', 1)->first();
+
+    if (!$activity) {
+        return response()->json(['message' => 'Activity not found or not archived'], 404);
+    }
+
+    $activity->update(['archive' => 0]);
+
+    return response()->json(['message' => 'Activity restored successfully', 'activity' => $activity], 200);
+}
+
 }

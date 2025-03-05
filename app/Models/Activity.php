@@ -10,6 +10,6 @@ class Activity extends Model
     use HasFactory;
     
     protected $fillable = [
-        'title', 'description', 'date_started', 'due_date', 'tags', 'status', 'archive'
+        'title', 'description', 'date_started', 'due_date', 'tags', 'status', 'archive', 'user_id'
     ];
 }

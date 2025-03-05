@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminProjectController;
 use App\Http\Controllers\MyToDoListController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\NotificationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -104,8 +105,9 @@ Route::delete('/tasks/{id}', [AdminProjectController::class, 'deleteTasks']);
 
 // Route::get('/tasks/archived', [AdminProjectController::class, 'archivedTasks']);
 Route::get('/archived-tasks', [AdminProjectController::class, 'getArchivedTasks']); 
-Route::put('/tasks/restore/{id}', [AdminProjectController::class, 'restore']);
+Route::put('/tasks/{id}/restore', [AdminProjectController::class, 'restore']);
 
+Route::put('/tasks/{id}/toggle-visibility', [AdminProjectController::class, 'toggleVisibility']);
 
 // Acitvity
 
@@ -113,8 +115,20 @@ Route::put('/tasks/restore/{id}', [AdminProjectController::class, 'restore']);
 
 // Route::put('activity/{activity}/archive', [ActivityController::class, 'archive']);
 
-Route::apiResource('activities', ActivityController::class);
+Route::get('/activities/{authToken}', [ActivityController::class, 'index']);
+Route::apiResource('/activities', ActivityController::class);
+Route::get('/user/{authToken}', [ActivityController::class, 'getUserByToken']);
 
 Route::put('/activities/{id}/archive', [ActivityController::class, 'archive']);
+Route::put('/activities/{id}/done', [ActivityController::class, 'markAsDone']);
+Route::put('/activities/{id}/restore', [ActivityController::class, 'restore']);
+Route::put('/activities/{id}/archive', [ActivityController::class, 'archiveActivity']);
 
+
+
+// NOTIFICATION
+
+Route::get('/notifications', [NotificationController::class, 'getUserNotifications']);
+Route::put('/notifications/{id}/markAsRead', [NotificationController::class, 'markAsRead']);
+Route::put('/notifications/markAllAsRead', [NotificationController::class, 'markAllAsRead']);
 

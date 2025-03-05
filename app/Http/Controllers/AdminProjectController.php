@@ -5,9 +5,25 @@ namespace App\Http\Controllers;
 use App\Models\Task; // Make sure to import the Task model
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Notification;
 
 class AdminProjectController extends Controller
 {
+
+
+
+    private function sendNotification($message, $userId)
+    {
+
+        $notification = Notification::create([
+            'user_id' => $userId,
+            'message' => $message,
+            'status' => 'unread',
+        ]);
+
+        // Broadcast the event
+        // broadcast(new NotificationSent($notification))->toOthers();
+    }
     // Show a list of tasks
     public function index()
     {
@@ -27,7 +43,9 @@ class AdminProjectController extends Controller
     public function show($userId)
     {
         // Find tasks by user_id
-        $tasks = Task::where('user_id', $userId)->get();
+        $tasks = Task::where('user_id', $userId)
+                        ->where('visibility', 'visible')
+                             ->get();
     
         // Check if tasks exist for the given user_id
     
@@ -59,7 +77,8 @@ class AdminProjectController extends Controller
             'status' => $request->status,
             'tags' => $request->tags,
         ]);
-
+        // Send notification after profile update
+        $this->sendNotification('An admin asigned a task to user id { '. $request->user_id . ' }', $request->user_id);
         return response()->json($task, 201); // Return the created task with a 201 status code
     }
 
@@ -182,63 +201,82 @@ class AdminProjectController extends Controller
     }
     // Function to handle Archive Task (status change to 'archived')
     public function archiveTask($id)
-{
-    $task = Task::find($id);
+    {
+        $task = Task::find($id);
+        
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+
+        $task->archived = true;
+        $task->save();
+
+        return response()->json(['message' => 'Task archived successfully'], 200);
+    }
+
+
+        // Function to handle Edit Task (pre-fill the task data)
+        public function editTask($taskId)
+    {
+        try {
+            $task = Task::findOrFail($taskId);
+            return response()->json($task, 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Task not found.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to fetch task details.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function archivedIndex()
+    {
+        $archivedTasks = Task::where('archived', 1)->get(); // Retrieve only archived tasks
+        return response()->json($archivedTasks); // Return as JSON response
+    }
+
+
+
+    public function getArchivedTasks()
+    {
+        $archivedTasks = Task::where('archived', true)->get();
+        return response()->json($archivedTasks);
+    }
+
+    public function restore($id)
+    {
+        // Find the task, including soft-deleted ones if using SoftDeletes
+        $task = Task::withTrashed()->find($id);
     
-    if (!$task) {
-        return response()->json(['message' => 'Task not found'], 404);
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+    
+        // Restore if soft deleted
+        if ($task->trashed()) {
+            $task->restore();
+        }
+    
+        // Set archived to false (if you're not using soft deletes)
+        $task->archived = false;
+        $task->save();
+    
+        return response()->json(['message' => 'Task restored successfully'], 200);
+    }
+    
+
+    public function toggleVisibility($id)
+    {
+        $task = Task::findOrFail($id);
+        
+        // Toggle the visibility
+        $task->visibility = $task->visibility === 'visible' ? 'invisible' : 'visible';
+        $task->save();
+
+        return response()->json([
+            'message' => 'Task visibility updated successfully',
+            'task' => $task
+        ]);
     }
 
-    $task->archived = true;
-    $task->save();
-
-    return response()->json(['message' => 'Task archived successfully'], 200);
-}
-
-
-    // Function to handle Edit Task (pre-fill the task data)
-    public function editTask($taskId)
-{
-    try {
-        $task = Task::findOrFail($taskId);
-        return response()->json($task, 200);
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        return response()->json(['message' => 'Task not found.'], 404);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'Failed to fetch task details.', 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function archivedIndex()
-{
-    $archivedTasks = Task::where('archived', 1)->get(); // Retrieve only archived tasks
-    return response()->json($archivedTasks); // Return as JSON response
-}
-
-
-
-public function getArchivedTasks()
-{
-    $archivedTasks = Task::where('archived', true)->get();
-    return response()->json($archivedTasks);
-}
-
-
-public function restore($id)
-{
-    $task = Task::where('id', $id)->first();
-
-    if (!$task) {
-        return response()->json(['message' => 'Task not found.'], 404);
-    }
-
-    $task->archived = 0; // Ensure archived is set to 0
-    $task->save(); // Save changes
-
-    return response()->json([
-        'message' => 'Task restored successfully.',
-        'task' => $task
-    ]);
-}
 
 }

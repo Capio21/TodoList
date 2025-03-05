@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,19 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    // POGI SI Ariel James De Guzman
+    private function sendNotification($message, $userId)
+    {
+
+        $notification = Notification::create([
+            'user_id' => $userId,
+            'message' => $message,
+            'status' => 'unread',
+        ]);
+
+        // Broadcast the event
+        // broadcast(new NotificationSent($notification))->toOthers();
+    }
     public function getUsers()
     {
         // Filter users by usertype 'admin'
@@ -248,29 +262,33 @@ class AuthController extends Controller
         $user->email = $request->email;
         $user->save();
     
+        // Send notification after profile update
+        $this->sendNotification($user->username . ' updated their admin profile', $user->id);
+    
         return response()->json([
             'message' => 'Profile updated successfully',
             'user' => $user
         ]);
     }
     
+    
 
     public function getUserByToken(Request $request)
-{
-    $authToken = $request->bearerToken(); // Get token from Authorization header
+    {
+        $authToken = $request->bearerToken(); // Get token from Authorization header
 
-    if (!$authToken) {
-        return response()->json(['message' => 'Unauthorized'], 401);
+        if (!$authToken) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Find user by token
+        $user = User::where('authToken', $authToken)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid token'], 401);
+        }
+
+        return response()->json(['user' => $user]);
     }
-
-    // Find user by token
-    $user = User::where('authToken', $authToken)->first();
-
-    if (!$user) {
-        return response()->json(['message' => 'Invalid token'], 401);
-    }
-
-    return response()->json(['user' => $user]);
-}
 
 }
