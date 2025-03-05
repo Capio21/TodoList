@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Head from "next/head";
+import Adminbar from "../Components/adminsidebar";
 
 export default function UsersTable() {
   const [users, setUsers] = useState([]);
@@ -97,48 +98,11 @@ export default function UsersTable() {
       </Head>
 
       <div className="flex min-h-screen bg-gray-900 text-white">
-        <aside className="w-64 bg-gray-800 p-6 flex flex-col justify-between border-r border-blue-500">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-400 text-center mb-6">
-              Infi-Admin
-            </h1>
-            <nav className="space-y-4">
-              <button
-                onClick={() => router.push("/DashBoard")}
-                className="w-full text-left bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded transition"
-              >
-                📊 Dashboard
-              </button>
-              <button
-                onClick={() => router.push("/usertodo")}
-                className="w-full text-left bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded transition"
-              >
-                ✅ User To-Do List
-              </button>
-              <button
-                onClick={() => router.push("/Userlist")}
-                className="w-full text-left bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded transition"
-              >
-                👥 User List
-              </button>
-              <button
-                onClick={() => router.push("/Userlist/AdminReg")}
-                className="w-full text-left bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded transition"
-              >
-                🛠️ Admin Register
-              </button>
-            </nav>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded transition mt-4"
-          >
-            🚪 Logout
-          </button>
-        </aside>
+        
+      <Adminbar />
 
         <div className="flex-1 flex flex-col items-center p-10">
+          
   <h2 className="text-3xl font-bold text-white text-center mb-6 drop-shadow-lg">
     User List
   </h2>

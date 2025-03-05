@@ -1,9 +1,9 @@
-'use client';
+"use client"
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaHome, FaTasks, FaUserAlt, FaSignOutAlt, FaProjectDiagram } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import Sidebar from "../Components/Sidebar";
 
 interface Activity {
   id: number;
@@ -16,7 +16,14 @@ interface Activity {
   archive: boolean;
 }
 
+const alarmSound = new Audio("/alarm-sound.mp3");
 
+const playAlarm = () => {
+  alarmSound.currentTime = 0;
+  alarmSound.play().catch(error => {
+    console.error("Error playing alarm sound:", error);
+  });
+};
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
@@ -31,28 +38,48 @@ export default function ActivityPage() {
     status: 'pending', 
     archive: false 
   });
-  const [editId, setEditId] = useState<number | null>(null);
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
-  const [showArchiveTableModal, setShowArchiveTableModal] = useState(false);
-  const [archiveId, setArchiveId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true); // Added loading state
-  const [error, setError] = useState<string | null>(null); // Added error state
-  const router = useRouter();  // Add this line
 
-  const [selectedStatus, setSelectedStatus] = useState("pending");
   const [isOpen, setIsOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState("pending");
+  const router = useRouter();
 
   const filteredActivities = activities.filter(activity => activity.status === selectedStatus && !activity.archive);
   const archivedActivities = activities.filter(activity => activity.archive);
 
   const fetchActivities = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/activities`);
+      const authToken = sessionStorage.getItem("authToken");
+      if (!authToken) {
+        console.error("No authToken found in sessionStorage.");
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/activities/${authToken}`);
       setActivities(response.data);
     } catch (error) {
       console.error("Error fetching activities:", error);
     }
   };
+
+  useEffect(() => {
+    const checkAlarms = setInterval(() => {
+      const now = new Date();
+      filteredActivities.forEach(activity => {
+        const activityTime = new Date(activity.due_date);
+        if (
+          activityTime.getFullYear() === now.getFullYear() &&
+          activityTime.getMonth() === now.getMonth() &&
+          activityTime.getDate() === now.getDate() &&
+          activityTime.getHours() === now.getHours() &&
+          activityTime.getMinutes() === now.getMinutes()
+        ) {
+          playAlarm();
+        }
+      });
+    }, 60000);
+
+    return () => clearInterval(checkAlarms);
+  }, [filteredActivities]);
 
   useEffect(() => {
     fetchActivities();
@@ -65,13 +92,30 @@ export default function ActivityPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const authToken = sessionStorage.getItem("authToken");
+      if (!authToken) {
+        console.error("No authToken found in sessionStorage.");
+        return;
+      }
+
+      const userResponse = await axios.get(`${API_BASE_URL}/user/${authToken}`);
+      const userId = userResponse.data.id;
+
+      if (!userId) {
+        console.error("User  ID not found.");
+        return;
+      }
+
+      const newFormData = { ...formData, user_id: userId };
+
       if (editId) {
-        await axios.put(`${API_BASE_URL}/activities/${editId}`, formData);
+        await axios.put(`${API_BASE_URL}/activities/${editId}`, newFormData);
         alert("Activity updated successfully!");
       } else {
-        await axios.post(`${API_BASE_URL}/activities`, formData);
+        await axios.post(`${API_BASE_URL}/activities`, newFormData);
         alert("Activity created successfully!");
       }
+
       setFormData({ title: "", description: "", date_started: "", due_date: "", tags: "", status: 'pending', archive: false });
       setEditId(null);
       fetchActivities();
@@ -96,51 +140,30 @@ export default function ActivityPage() {
     }
   };
 
-  const openArchiveModal = (id: number) => {
-    setArchiveId(id);
-    setShowArchiveModal(true);
-  };
-
-  const confirmArchive = async (archiveId: number) => {
-    if (archiveId !== null) {
-      try {
-        await axios.put(`${API_BASE_URL}/activities/${archiveId}`, { archive: 1 }); // Ensure archive is set to 1
-        setShowArchiveModal(false);
-        setArchiveId(null);
-        fetchActivities();
-      } catch (error) {
-        console.error("Error archiving activity:", error);
-      }
-    }
-  };
-  
-
   const handleMarkAsDone = async (id: number) => {
     try {
-      await axios.put(`${API_BASE_URL}/activities/${id}`, { status: 'complete' });
+      await axios.put(`${API_BASE_URL}/activities/${id}/done`);
       fetchActivities();
     } catch (error) {
       console.error("Error marking activity as done:", error);
     }
   };
-  const restoreActivity = async (id: number) => {
+
+  const handleArchive = async (id: number) => {
     try {
-      await axios.put(`${API_BASE_URL}/activities/${id}`, { archive: false });
-      fetchActivities(); // Refresh the list after unarchiving
+      await axios.put(`${API_BASE_URL}/activities/${id}/archive`);
+      fetchActivities();
     } catch (error) {
-      console.error("Error restoring activity:", error);
+      console.error("Error archiving activity:", error);
     }
   };
 
-  
-  const deleteActivity = async (id: number) => {
-    if (confirm("Are you sure you want to delete this activity?")) {
-      try {
-        await fetch(`/api/activities/${id}`, { method: "DELETE" });
-        setActivities(prev => prev.filter(activity => activity.id !== id));
-      } catch (error) {
-        console.error("Error deleting activity:", error);
-      }
+  const handleRestore = async (id: number) => {
+    try {
+      await axios.put(`${API_BASE_URL}/activities/${id}/restore`); // Ensure this endpoint exists in your backend
+      fetchActivities();
+    } catch (error) {
+      console.error("Error restoring activity:", error);
     }
   };
 
@@ -160,237 +183,64 @@ export default function ActivityPage() {
     }
   };
 
-  useEffect(() => {
-    const authToken = sessionStorage.getItem("authToken");
-    if (!authToken) {
-      setError("Auth token not found");
-      setLoading(false);
-      return;
-    }
-    axios.post("http://127.0.0.1:8000/api/getUserId", { authToken })
-      .then(response => fetchTasks(response.data.id))
-      .catch(() => {
-        setError("Failed to authenticate user");
-        setLoading(false);
-      });
-  }, []);
-return (
-  <div className="flex min-h-screen bg-gray-900 text-white">
-    {/* Sidebar with Glassmorphism & Depth Effect */}
-    <aside className="w-72 bg-gray-800 p-6 flex flex-col justify-between border-r border-blue-500 shadow-2xl backdrop-blur-md bg-opacity-80 rounded-lg">
-      <div>
-        <h1 className="text-3xl font-bold text-blue-400 text-center mb-6 drop-shadow-lg">
-          📌 Task-Dash
-        </h1>
-        <nav className="space-y-4">
-          {[
-            { path: "/todolist", label: "Dashboard", icon: <FaHome /> },
-            { path: "/Taskuser", label: "My Tasks", icon: <FaTasks /> },
-            { path: "/ProjectUser", label: "My Project", icon: <FaProjectDiagram /> },
-            { path: "/UserProfile", label: "Profile", icon: <FaUserAlt /> },
-          ].map((item, index) => (
-            <button
-              key={index}
-              onClick={() => router.push(item.path)}
-              className="w-full flex items-center text-left bg-gradient-to-br from-gray-700 to-gray-600 hover:from-blue-700 hover:to-blue-500 py-3 px-4 rounded-xl transition-transform transform hover:scale-105 shadow-md"
-            >
-              <span className="mr-3">{item.icon}</span> {item.label}
+  return (
+    <>
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 max-h-30 bg-gray-900 text-white flex items-center justify-center p-9">
+          <div className="w-full max-w-auto bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+            <h2 className="text-4xl font-extrabold text-blue-400 mb-6 text-center drop-shadow-xl">
+              📊 Personal Task
+            </h2>
+            <button onClick={() => setIsOpen(true)} className="w-full bg-red-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-red-900">
+              Add Task +
             </button>
-          ))}
-        </nav>
-      </div>
-      <button
-        onClick={handleLogout}
-        className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 py-3 px-4 rounded-xl shadow-lg transform transition-transform hover:scale-105 flex items-center justify-center"
-      >
-        <FaSignOutAlt className="mr-2" /> Logout
-      </button>
-    </aside>
-
-  {/* Main Content */}
-<div className="flex-1 p-8 bg-gray-900 text-white">
-  <h2 className="text-4xl font-extrabold text-blue-400 mb-6 drop-shadow-xl">
-    📊 Task Overview
-  </h2>
-
-  <div className="flex space-x-8">
-    {/* Form Section */}
-    <div className="max-w-lg: p-6 bg-gray-800 border-4 border-black shadow-[15px_15px_0px_#000] translate-x-[-6px] translate-y-[-6px] transition-all">
-      <div className="bg-white p-2 font-bold border-b-4 border-black text-black text-center">
-        Activity Manager
-      </div>
-      <div className="p-4 text-black font-semibold">
-      
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <input
-            type="text"
-            name="title"
-            placeholder="Title"
-            value={formData.title || ""}
-            onChange={handleChange}
-            className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-[3px_3px_0px_#000]"
-            required
-          />
-          <textarea
-            name="description"
-            placeholder="Description"
-            value={formData.description || ""}
-            onChange={handleChange}
-            className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-[3px_3px_0px_#000]"
-          ></textarea>
-          <input
-            type="date"
-            name="date_started"
-            value={formData.date_started || ""}
-            onChange={handleChange}
-            className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-[3px_3px_0px_#000]"
-            required
-          />
-          <input
-            type="date"
-            name="due_date"
-            value={formData.due_date || ""}
-            onChange={handleChange}
-            className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-[3px_3px_0px_#000]"
-            required
-          />
-          <input
-            type="text"
-            name="tags"
-            placeholder="Tags"
-            value={formData.tags || ""}
-            onChange={handleChange}
-            className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-[3px_3px_0px_#000]"
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-800 border-4 border-black shadow-[3px_3px_0px_#000] p-2 font-bold cursor-pointer hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[1.5px_1.5px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[0px_0px_0px_#000] transition-all"
-          >
-            {editId ? "Update" : "Add"} Activity
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <div className="p-4">
-      <button onClick={() => setIsOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded shadow-md hover:bg-blue-700">Manage Activities</button>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-gray-900 text-white p-6 rounded-lg w-1/2 shadow-xl border-4 border-black">
-            <h2 className="text-xl font-bold mb-4">Activity Management</h2>
-            <select onChange={(e) => setSelectedStatus(e.target.value)} className="p-2 border-2 border-black text-black font-bold mb-4 w-full">
-              <option value="pending">Pending</option>
-              <option value="complete">Complete</option>
-              <option value="overdue">Overdue</option>
-              <option value="archived">Archived</option>
-            </select>
-            {selectedStatus !== "archived" ? (
-              <div>
-                <h3 className="text-lg font-bold bg-blue-800 p-2 border-b-4 border-black">{selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)} Activities</h3>
-                <ul className="list-none p-4">
-                  {filteredActivities.map(activity => (
-                    <li key={activity.id} className="border-4 border-black p-4 bg-gray-800 flex justify-between items-center mb-2">
-                      <div><strong>{activity.title}</strong> - {activity.due_date}</div>
-                      <div>
-                        {selectedStatus === "pending" && <button onClick={() => handleMarkAsDone(activity.id)} className="bg-green-600 px-3 py-1 mr-2 text-white">Mark as Done</button>}
-                        <button onClick={() => handleEdit(activity)} className="bg-yellow-500 px-3 py-1 mr-2">Edit</button>
-                        <button onClick={() => confirmArchive(activity.id)} className="bg-gray-600 px-3 py-1 mr-2 text-white">Archive</button>
-                        <button onClick={() => handleDelete(activity.id)} className="bg-red-600 px-3 py-1 text-white">Delete</button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+            <div className="mt-6">
+              <h2 className="text-2xl font-bold mb-4 text-center">Activity Management</h2>
+              <select onChange={(e) => setSelectedStatus(e.target.value)} className="w-full p-2 border-4 border-black text-black font-bold mb-4 rounded">
+                <option value="pending">Pending</option>
+                <option value="complete">Complete</option>
+                <option value="overdue">Overdue</option>
+                <option value="archived">Archived</option>
+              </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {(selectedStatus !== "archived" ? filteredActivities : archivedActivities).map(activity => (
+                  <div key={activity.id} className="p-4 border-4 border-black bg-gray-900 text-white rounded-lg shadow-lg">
+                    <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
+                    <p className="mb-4 text-gray-400">Due: {activity.due_date}</p>
+                    <button onClick={() => handleEdit(activity)} className="bg-blue-600 p-2 rounded">Edit</button>
+                    {activity.status === 'pending' && !activity.archive && (
+                      <button onClick={() => handleMarkAsDone(activity.id)} className="bg-green-600 p-2 rounded ml-2">Mark as Done</button>
+                    )}
+                    {activity.archive ? (
+                      <button onClick={() => handleRestore(activity.id)} className="bg-yellow-600 p-2 rounded ml-2">Restore</button>
+                    ) : (
+                      <button onClick={() => handleArchive(activity.id)} className="bg-yellow-600 p-2 rounded ml-2">Archive</button>
+                    )}
+                    <button onClick={() => handleDelete(activity.id)} className="bg-red-600 p-2 rounded ml-2">Delete</button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div>
-                <h3 className="text-lg font-bold bg-blue-800 p-2 border-b-4 border-black">Archived Activities</h3>
-                <table className="w-full border-4 border-black bg-gray-800">
-                  <thead>
-                    <tr className="bg-gray-900">
-                      <th className="border-4 border-black p-2">Title</th>
-                      <th className="border-4 border-black p-2">Date Started</th>
-                      <th className="border-4 border-black p-2">Due Date</th>
-                      <th className="border-4 border-black p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {archivedActivities.map(activity => (
-                      <tr key={activity.id} className="bg-gray-700">
-                        <td className="border-4 border-black p-2">{activity.title}</td>
-                        <td className="border-4 border-black p-2">{activity.date_started}</td>
-                        <td className="border-4 border-black p-2">{activity.due_date}</td>
-                        <td className="border-4 border-black p-2">
-                          <button onClick={() => restoreActivity(activity.id)} className="bg-green-600 px-3 py-1 mr-2 text-white">Restore</button>
-                          <button onClick={() => deleteActivity(activity.id)} className="bg-red-600 px-3 py-1 text-white">Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            </div>
+            {isOpen && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+                <div className="bg-red-900 p-6 rounded-lg shadow-lg w-full max-w-md relative">
+                  <button onClick={() => setIsOpen(false)} className="absolute top-2 right-2 text-white font-bold text-xl">×</button>
+                  <h2 className="text-lg font-bold mb-4">{editId ? "Edit" : "Add"} Activity</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
+                    <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md"></textarea>
+                    <input type="date" name="date_started" value={formData.date_started} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
+                    <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
+                    <input type="text" name="tags" placeholder="Tags" value={formData.tags} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" />
+                    <button type="submit" className="w-full bg-blue-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-blue-900">{editId ? "Update" : "Add"} Activity</button>
+                  </form>
+                </div>
               </div>
             )}
-            <button onClick={() => setIsOpen(false)} className="mt-4 bg-red-600 text-white px-4 py-2 rounded shadow-md hover:bg-red-700">Close</button>
           </div>
         </div>
-      )}
-    </div>
-  </div>
-</div>
-
-
-    {/* Loader Styles */}
-    <style jsx>{`
-      .loader-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 60vh;
-        width: 100%;
-      }
-
-      .ball {
-        position: relative;
-        bottom: 50px;
-        left: calc(100% - 20px);
-        width: 50px;
-        height: 50px;
-        background: #fff;
-        border-radius: 50%;
-        animation: ball-move 0.2s ease-in-out infinite alternate;
-        box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
-      }
-
-      .bar {
-        width: 200px;
-        height: 12.5px;
-        background: linear-gradient(45deg, #ffdaaf, #ffb347);
-        border-radius: 30px;
-        transform: rotate(-15deg);
-        animation: up-down 0.2s ease-in-out infinite alternate;
-      }
-
-      @keyframes up-down {
-        from {
-          transform: rotate(-15deg);
-        }
-        to {
-          transform: rotate(15deg);
-        }
-      }
-
-      @keyframes ball-move {
-        from {
-          left: calc(100% - 40px);
-          transform: rotate(360deg);
-        }
-        to {
-          left: calc(0% - 20px);
-          transform: rotate(0deg);
-        }
-      }
-    `}</style>
-  </div>
-);
-
-  
+      </div>
+    </>
+  );
 }

@@ -16,6 +16,9 @@ export default function Archive() {
   const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedTask, setSelectedTask] = useState<ArchivedTask | null>(null);
+  const tasksPerPage = 2;
 
   useEffect(() => {
     fetchArchivedTasks();
@@ -46,39 +49,72 @@ export default function Archive() {
     }
   };
 
-  return (
-    <div className="p-6 bg-gray-900 min-h-full text-white flex flex-col items-center">
-  <h2 className="text-2xl font-bold mb-6 text-center">Archived Tasks</h2>
-  {loading ? (
-    <p className="text-center text-gray-400">Loading archived tasks...</p>
-  ) : error ? (
-    <p className="text-center text-red-500">{error}</p>
-  ) : archivedTasks.length === 0 ? (
-    <p className="text-center text-gray-400">No archived tasks found.</p>
-  ) : (
-    <div className="flex flex-wrap justify-center gap-6 max-w-3xl">
-      {archivedTasks.map((task) => (
-        <article
-          key={task.id}
-          className="w-72 bg-blue-900 border-4 border-black shadow-[8px_8px_0_#000] p-4 space-y-2 rounded-md transition-all duration-300 hover:translate-x-[-6px] hover:translate-y-[-6px]"
-        >
-          <div className="bg-white text-black font-bold px-4 py-2 border-b-4 border-black">
-            {task.title}
-          </div>
-          <p className="text-black font-semibold p-4">{task.description}</p>
-          <p className="text-xs text-black px-4">Status: {task.status}</p>
-          <p className="text-xs text-black px-4">Deadline: {task.deadline}</p>
-          <button
-            onClick={() => restoreTask(task.id)}
-            className="mt-3 py-2 px-4 bg-green-400 border-4 border-black shadow-[4px_4px_0_#000] text-black font-bold rounded-md transition-all duration-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
-          >
-            Restore
-          </button>
-        </article>
-      ))}
-    </div>
-  )}
-</div>
+  const totalPages = Math.ceil(archivedTasks.length / tasksPerPage);
+  const currentTasks = archivedTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage);
 
+  return (
+    <section style={{ padding: "20px", textAlign: "center", backgroundColor: "#808080", color: "black" }}>
+      <h3 style={{ color: "black", backgroundColor: "#606060", padding: "10px", borderRadius: "10px", textAlign: "center" }}>Archived Tasks</h3>
+      {loading ? (
+        <p>Loading archived tasks...</p>
+      ) : error ? (
+        <p>{error}</p>
+      ) : archivedTasks.length === 0 ? (
+        <p>No archived tasks found.</p>
+      ) : (
+        <div>
+          <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#A9A9A9", color: "black", border: "3px solid #505050" }}>
+            <thead>
+              <tr style={{ backgroundColor: "#707070" }}>
+                <th style={{ padding: "10px", border: "2px solid #505050" }}>ID</th>
+                <th style={{ padding: "10px", border: "2px solid #505050" }}>Title</th>
+                <th style={{ padding: "10px", border: "2px solid #505050" }}>Description</th>
+                <th style={{ padding: "10px", border: "2px solid #505050" }}>Status</th>
+                <th style={{ padding: "10px", border: "2px solid #505050" }}>Deadline</th>
+                <th style={{ padding: "10px", border: "2px solid #505050" }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentTasks.map((task) => (
+                <tr key={task.id} style={{ backgroundColor: "#B0B0B0" }}>
+                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.id}</td>
+                  <td
+                    style={{ padding: "10px", border: "2px solid #505050", cursor: "pointer", textDecoration: "underline" }}
+                    onClick={() => setSelectedTask(task)}
+                  >
+                    {task.title}
+                  </td>
+                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.description}</td>
+                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.status}</td>
+                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.deadline}</td>
+                  <td style={{ padding: "10px", border: "2px solid #505050" }}>
+                    <button 
+                      onClick={() => restoreTask(task.id)}
+                      style={{ backgroundColor: "#606060", color: "white", padding: "5px 10px", borderRadius: "5px", cursor: "pointer", border: "none" }}>
+                      Restore
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: "10px" }}>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              style={{ margin: "5px", padding: "5px 10px", borderRadius: "5px", backgroundColor: "#606060", color: "white", border: "none", cursor: "pointer" }}>
+              Previous
+            </button>
+            <span style={{ fontSize: "16px", fontWeight: "bold" }}>Page {currentPage} of {totalPages}</span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              style={{ margin: "5px", padding: "5px 10px", borderRadius: "5px", backgroundColor: "#606060", color: "white", border: "none", cursor: "pointer" }}>
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
