@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from "next/navigation";
-import Sidebar from "../Components/Sidebar";
+import Sidebar from "../Components/taskuser";
 
 interface Activity {
   id: number;
@@ -14,6 +14,7 @@ interface Activity {
   tags?: string;
   status: 'pending' | 'complete' | 'overdue';
   archive: boolean;
+  dependencyId?: number; // New field for task dependencies
 }
 
 const alarmSound = new Audio("/alarm-sound.mp3");
@@ -27,6 +28,23 @@ const playAlarm = () => {
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
+const ProgressBar = ({ percentage }: { percentage: number }) => {
+  return (
+    <div className="w-full bg-gray-300 rounded-full dark:bg-gray-800 shadow-inner p-1">
+      <div
+        className="bg-red-600 text-xs font-bold text-white text-center p-1 leading-none rounded-full transition-all duration-300 shadow-md"
+        style={{
+          width: `${percentage}%`,
+          background: "linear-gradient(135deg, #ff4d4d, #b30000)",
+          boxShadow: "0 4px 6px rgba(255, 0, 0, 0.5)",
+        }}
+      >
+        {percentage.toFixed(0)}%
+      </div>
+    </div>
+  );
+};
+
 export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [formData, setFormData] = useState<Partial<Activity>>({ 
@@ -36,16 +54,17 @@ export default function ActivityPage() {
     due_date: "", 
     tags: "", 
     status: 'pending', 
-    archive: false 
+    archive: false,
+    dependencyId: undefined // Initialize dependencyId
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState("pending");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 1; // Set items per page to 1
   const router = useRouter();
-
-  const filteredActivities = activities.filter(activity => activity.status === selectedStatus && !activity.archive);
-  const archivedActivities = activities.filter(activity => activity.archive);
+  const [dependencies, setDependencies] = useState<Activity[]>([]); // New state for dependencies
 
   const fetchActivities = async () => {
     try {
@@ -56,30 +75,32 @@ export default function ActivityPage() {
       }
       const response = await axios.get(`${API_BASE_URL}/activities/${authToken}`);
       setActivities(response.data);
+      setDependencies(response.data); // Set dependencies from fetched activities
     } catch (error) {
       console.error("Error fetching activities:", error);
     }
   };
 
   useEffect(() => {
-    const checkAlarms = setInterval(() => {
+    const checkAlarms = setInterval(async () => {
       const now = new Date();
-      filteredActivities.forEach(activity => {
+      for (const activity of activities) {
         const activityTime = new Date(activity.due_date);
-        if (
-          activityTime.getFullYear() === now.getFullYear() &&
-          activityTime.getMonth() === now.getMonth() &&
-          activityTime.getDate() === now.getDate() &&
-          activityTime.getHours() === now.getHours() &&
-          activityTime.getMinutes() === now.getMinutes()
-        ) {
-          playAlarm();
+        if (activity.status === 'pending') {
+          // Check if the due date has passed
+          if (activityTime < now) {
+            // Update the status to overdue
+            await handleOverdue(activity.id);
+          } else 
+           {
+            playAlarm();
+          }
         }
-      });
-    }, 60000);
+      }
+    }, 500); // Check every minute
 
     return () => clearInterval(checkAlarms);
-  }, [filteredActivities]);
+  }, [activities]);
 
   useEffect(() => {
     fetchActivities();
@@ -116,17 +137,33 @@ export default function ActivityPage() {
         alert("Activity created successfully!");
       }
 
-      setFormData({ title: "", description: "", date_started: "", due_date: "", tags: "", status: 'pending', archive: false });
-      setEditId(null);
+      resetForm();
       fetchActivities();
     } catch (error: any) {
       console.error("Error submitting form:", error.response?.data || error.message);
+      alert("An error occurred while submitting the form. Please try again.");
     }
   };
 
+  const resetForm = () => {
+    setFormData({ title: "", description: "", date_started: "", due_date: "", tags: "", status: 'pending', archive: false, dependencyId: undefined });
+    setEditId(null);
+    setIsOpen(false);
+  };
+
   const handleEdit = (activity: Activity) => {
-    setFormData(activity);
+    setFormData({
+      title: activity.title,
+      description: activity.description || "",
+      date_started: activity.date_started,
+      due_date: activity.due_date,
+      tags: activity.tags || "",
+      status: activity.status,
+      archive: activity.archive,
+      dependencyId: activity.dependencyId // Set dependencyId for editing
+    });
     setEditId(activity.id);
+    setIsOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -160,7 +197,7 @@ export default function ActivityPage() {
 
   const handleRestore = async (id: number) => {
     try {
-      await axios.put(`${API_BASE_URL}/activities/${id}/restore`); // Ensure this endpoint exists in your backend
+      await axios.put(`${API_BASE_URL}/activities/${id}/restore`);
       fetchActivities();
     } catch (error) {
       console.error("Error restoring activity:", error);
@@ -183,49 +220,147 @@ export default function ActivityPage() {
     }
   };
 
+  const handleOverdue = async (id: number) => {
+    try {
+      console.log(`Updating activity ${id} to overdue status.`);
+      const response = await axios.put(`${API_BASE_URL}/activities/${id}/overdue`);
+      console.log("Response from server:", response.data);
+      fetchActivities(); // Refresh activities after updating
+    } catch (error) {
+      console.error("Error updating activity to overdue:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error:", error.response?.data);
+      }
+    }
+  };
+
+  // Pagination Logic
+  const totalPages = Math.ceil((selectedStatus !== "archived" ? activities.filter(activity => activity.status === selectedStatus && !activity.archive).length : activities.filter(activity => activity.archive).length) / itemsPerPage);
+  const currentActivities = (selectedStatus !== "archived" ? activities.filter(activity => activity.status === selectedStatus && !activity.archive) : activities.filter(activity => activity.archive)).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Calculate completion percentage
+  const completedActivities = activities.filter(activity => activity.status === 'complete').length;
+  const totalActivities = activities.length;
+  const completionPercentage = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
+
   return (
     <>
       <div className="flex">
         <Sidebar />
-        <div className="flex-1 max-h-30 bg-gray-900 text-white flex items-center justify-center p-9">
-          <div className="w-full max-w-auto bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
-            <h2 className="text-4xl font-extrabold text-blue-400 mb-6 text-center drop-shadow-xl">
-              📊 Personal Task
-            </h2>
-            <button onClick={() => setIsOpen(true)} className="w-full bg-red-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-red-900">
+        <div className="m-h-auto flex-1 max-h-25 bg-gray-900 text-white flex items-center justify-center p-9">
+          <div className="w-full max-h-50 max-w-auto bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="inline-block px-4 py-2 text-2xl font-bold text-white bg-red-500 border-2 border-black rounded-lg shadow-[5px_5px_0px_#000] transition-all duration-300 cursor-pointer hover:bg-white hover:text-red-500 hover:border-red-500 hover:shadow-[5px_5px_0px_#ff5252] active:bg-yellow-300 active:shadow-none active:translate-y-1"
+            >
               Add Task +
             </button>
+
             <div className="mt-6">
-              <h2 className="text-2xl font-bold mb-4 text-center">Activity Management</h2>
+              <h1 className="text-4xl font-bold mb-4 text-center"> 📊 Personal Task</h1>
+              <ProgressBar percentage={completionPercentage} />
+              <br />
+              
               <select onChange={(e) => setSelectedStatus(e.target.value)} className="w-full p-2 border-4 border-black text-black font-bold mb-4 rounded">
                 <option value="pending">Pending</option>
                 <option value="complete">Complete</option>
                 <option value="overdue">Overdue</option>
                 <option value="archived">Archived</option>
               </select>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(selectedStatus !== "archived" ? filteredActivities : archivedActivities).map(activity => (
-                  <div key={activity.id} className="p-4 border-4 border-black bg-gray-900 text-white rounded-lg shadow-lg">
-                    <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
-                    <p className="mb-4 text-gray-400">Due: {activity.due_date}</p>
-                    <button onClick={() => handleEdit(activity)} className="bg-blue-600 p-2 rounded">Edit</button>
-                    {activity.status === 'pending' && !activity.archive && (
-                      <button onClick={() => handleMarkAsDone(activity.id)} className="bg-green-600 p-2 rounded ml-2">Mark as Done</button>
-                    )}
-                    {activity.archive ? (
-                      <button onClick={() => handleRestore(activity.id)} className="bg-yellow-600 p-2 rounded ml-2">Restore</button>
-                    ) : (
-                      <button onClick={() => handleArchive(activity.id)} className="bg-yellow-600 p-2 rounded ml-2">Archive</button>
-                    )}
-                    <button onClick={() => handleDelete(activity.id)} className="bg-red-600 p-2 rounded ml-2">Delete</button>
-                  </div>
-                ))}
+              <div className="flex justify-center">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-6 max-w-4xl w-full">
+                  {currentActivities.map(activity => {
+                    const hasUnfinishedDependency = activity.dependencyId && activities.find(dep => dep.id === activity.dependencyId)?.status !== 'complete';
+
+                    return (
+                      <div 
+                        key={activity.id} 
+                        className={`p-4 border-4 border-black bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center ${hasUnfinishedDependency ? 'filter blur-sm' : ''}`}
+                      >
+                        <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
+                        <h3 className="text-xl font-bold mb-2">{activity.description}</h3>
+                        <p className="mb-4 text-gray-400">Due: {activity.due_date}</p>
+                        <p className="mb-4 text-gray-400">Tags: {activity.tags}</p>
+                        <p className="mb-4 text-gray-400">Status: {activity.status}</p>
+                        <div className="flex flex-row justify-center gap-2">
+                          <button 
+                            onClick={() => handleEdit(activity)}
+                            className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                          >
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-red-900 via-red-700 to-red-900"></span>
+                            <span className="relative block px-5 py-2 rounded-lg text-white bg-red-600 transform -translate-y-1 transition-transform duration-600 ease-out">Edit</span>
+                          </button>
+                      
+                          {activity.status === 'pending' && !activity.archive && !hasUnfinishedDependency && (
+                            <button 
+                              onClick={() => handleMarkAsDone(activity.id)}
+                              className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                            >
+                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                              <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Mark as Done</span>
+                            </button>
+                          )}
+                      
+                          {activity.archive ? (
+                            <button 
+                              onClick={() => handleRestore(activity.id)}
+                              className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                            >
+                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
+                              <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Restore</span>
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleArchive(activity.id)}
+                              className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                            >
+                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
+                              <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Archive</span>
+                            </button>
+                          )}
+                      
+                          <button 
+                            onClick={() => handleDelete(activity.id)}
+                            className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                          >
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-red-900 via-red-700 to-red-900"></span>
+                            <span className="relative block px-5 py-2 rounded-lg text-white bg-red-600 transform -translate-y-1 transition-transform duration-600 ease-out">Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex justify-between mt-4">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                  disabled={currentPage === 1} 
+                  className="bg-gray-600 p-2 rounded text-white"
+                >
+                  Previous
+                </button>
+                <span className="self-center text-white">Page {currentPage} of {totalPages}</span>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                  disabled={currentPage === totalPages} 
+                  className="bg-gray-600 p-2 rounded text-white transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
+                >
+                  Next
+                </button>
               </div>
             </div>
             {isOpen && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
                 <div className="bg-red-900 p-6 rounded-lg shadow-lg w-full max-w-md relative">
-                  <button onClick={() => setIsOpen(false)} className="absolute top-2 right-2 text-white font-bold text-xl">×</button>
+                  <button onClick={() => resetForm()} className="absolute top-2 right-2 text-white font-bold text-xl">×</button>
                   <h2 className="text-lg font-bold mb-4">{editId ? "Edit" : "Add"} Activity</h2>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
@@ -233,6 +368,12 @@ export default function ActivityPage() {
                     <input type="date" name="date_started" value={formData.date_started} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
                     <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
                     <input type="text" name="tags" placeholder="Tags" value={formData.tags} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" />
+                    {/* <select name="dependencyId" value={formData.dependencyId} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md">
+                      <option value="">No Dependency</option>
+                      {dependencies.map(dep => (
+                        <option key={dep.id} value={dep.id}>{dep.title}</option>
+                      ))}
+                    </select> */}
                     <button type="submit" className="w-full bg-blue-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-blue-900">{editId ? "Update" : "Add"} Activity</button>
                   </form>
                 </div>

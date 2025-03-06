@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 const SidebarNavigation = () => {
   const [active, setActive] = useState("DashBoard");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(true);
+ 
   const router = useRouter();
 
   // Placeholder profile image (Replace with dynamic source)
@@ -83,13 +83,7 @@ const SidebarNavigation = () => {
         </ul>
 
         {/* Profile Section */}
-        <div className="mb-6">
-          <img
-            src={profileImage}
-            alt="Profile"
-            className="w-12 h-12 rounded-full border-2 border-white cursor-pointer hover:opacity-80"
-          />
-        </div>
+       
 
         {/* Logout Modal */}
         {showLogoutModal && (

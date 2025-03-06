@@ -18,7 +18,7 @@ export default function Archive() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedTask, setSelectedTask] = useState<ArchivedTask | null>(null);
-  const tasksPerPage = 2;
+  const tasksPerPage = 2; // Increased visibility
 
   useEffect(() => {
     fetchArchivedTasks();
@@ -53,8 +53,8 @@ export default function Archive() {
   const currentTasks = archivedTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage);
 
   return (
-    <section style={{ padding: "20px", textAlign: "center", backgroundColor: "#808080", color: "black" }}>
-      <h3 style={{ color: "black", backgroundColor: "#606060", padding: "10px", borderRadius: "10px", textAlign: "center" }}>Archived Tasks</h3>
+    <section className="p-6 text-center bg-gray-700 text-white rounded-lg shadow-lg max-w-2xl mx-auto">
+      <h3 className="text-lg font-bold bg-gray-800 p-3 rounded">Archived Tasks</h3>
       {loading ? (
         <p>Loading archived tasks...</p>
       ) : error ? (
@@ -62,35 +62,41 @@ export default function Archive() {
       ) : archivedTasks.length === 0 ? (
         <p>No archived tasks found.</p>
       ) : (
-        <div>
-          <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#A9A9A9", color: "black", border: "3px solid #505050" }}>
+        <div className="max-h-80 overflow-y-auto">
+          <table className="w-full border-collapse bg-gray-900 text-white border border-gray-600">
             <thead>
-              <tr style={{ backgroundColor: "#707070" }}>
-                <th style={{ padding: "10px", border: "2px solid #505050" }}>ID</th>
-                <th style={{ padding: "10px", border: "2px solid #505050" }}>Title</th>
-                <th style={{ padding: "10px", border: "2px solid #505050" }}>Description</th>
-                <th style={{ padding: "10px", border: "2px solid #505050" }}>Status</th>
-                <th style={{ padding: "10px", border: "2px solid #505050" }}>Deadline</th>
-                <th style={{ padding: "10px", border: "2px solid #505050" }}>Action</th>
+              <tr className="bg-gray-800">
+                <th className="p-2 border border-gray-600">ID</th>
+                <th className="p-2 border border-gray-600">Title</th>
+                <th className="p-2 border border-gray-600">Description</th>
+                <th className="p-2 border border-gray-600">Status</th>
+                <th className="p-2 border border-gray-600">Deadline</th>
+                <th className="p-2 border border-gray-600">Action</th>
               </tr>
             </thead>
             <tbody>
               {currentTasks.map((task) => (
-                <tr key={task.id} style={{ backgroundColor: "#B0B0B0" }}>
-                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.id}</td>
-                  <td
-                    style={{ padding: "10px", border: "2px solid #505050", cursor: "pointer", textDecoration: "underline" }}
-                    onClick={() => setSelectedTask(task)}
-                  >
+                <tr key={task.id} className="bg-gray-700">
+                  <td className="p-2 border border-gray-600">{task.id}</td>
+                  <td className="p-2 border border-gray-600 cursor-pointer underline" onClick={() => setSelectedTask(task)}>
                     {task.title}
                   </td>
-                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.description}</td>
-                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.status}</td>
-                  <td style={{ padding: "10px", border: "2px solid #505050" }}>{task.deadline}</td>
-                  <td style={{ padding: "10px", border: "2px solid #505050" }}>
+                  <td className="p-2 border border-gray-600">
+                    {task.description.length > 50 ? (
+                      <span>
+                        {task.description.slice(0, 50)}...
+                        <button className="text-blue-400 ml-2" onClick={() => setSelectedTask(task)}>Show More</button>
+                      </span>
+                    ) : (
+                      task.description
+                    )}
+                  </td>
+                  <td className="p-2 border border-gray-600">{task.status}</td>
+                  <td className="p-2 border border-gray-600">{task.deadline}</td>
+                  <td className="p-2 border border-gray-600">
                     <button 
                       onClick={() => restoreTask(task.id)}
-                      style={{ backgroundColor: "#606060", color: "white", padding: "5px 10px", borderRadius: "5px", cursor: "pointer", border: "none" }}>
+                      className="bg-green-600 text-white p-2 rounded hover:bg-green-500">
                       Restore
                     </button>
                   </td>
@@ -98,18 +104,18 @@ export default function Archive() {
               ))}
             </tbody>
           </table>
-          <div style={{ marginTop: "10px" }}>
+          <div className="mt-4 flex justify-center space-x-2">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              style={{ margin: "5px", padding: "5px 10px", borderRadius: "5px", backgroundColor: "#606060", color: "white", border: "none", cursor: "pointer" }}>
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
               Previous
             </button>
-            <span style={{ fontSize: "16px", fontWeight: "bold" }}>Page {currentPage} of {totalPages}</span>
+            <span className="text-lg font-bold">Page {currentPage} of {totalPages}</span>
             <button
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              style={{ margin: "5px", padding: "5px 10px", borderRadius: "5px", backgroundColor: "#606060", color: "white", border: "none", cursor: "pointer" }}>
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
               Next
             </button>
           </div>

@@ -97,77 +97,73 @@ const TaskForm: React.FC<{
     reset();
   };
 
-    return (
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-          <div>
-            <label htmlFor="user_id" className="block text-white">User</label>
-            <select id="user_id" {...register("user_id", { required: true })} className="text-black p-2 w-full bg-gray-700 rounded-md">
-              <option value="">Select User</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>{user.username}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="title" className="block text-white">Title</label>
-            <input id="title" type="text" {...register("title", { required: true })} className="text-black p-2 w-full bg-gray-700 rounded-md" />
-          </div>
-
-          <div>
-            <label htmlFor="time_started" className="block text-white">Time Started</label>
-            <input id="time_started" type="datetime-local" {...register("time_started", { required: true })} className="text-black p-2 w-full bg-gray-700 rounded-md" />
-          </div>
-
-          <div>
-            <label htmlFor="time_ended" className="block text-white">Time Ended</label>
-            <input id="time_ended" type="datetime-local" {...register("time_ended", { required: true })} className="text-black p-2 w-full bg-gray-700 rounded-md" />
-          </div>
-
-          <div>
-            <label htmlFor="deadline" className="block text-white">Deadline</label>
-            <input id="deadline" type="datetime-local" {...register("deadline", { required: true })} className="text-black p-2 w-full bg-gray-700 rounded-md" />
-          </div>
-
-          <div>
-            <label htmlFor="status" className="block text-white">Status</label>
-            <select id="status" {...register("status", { required: true })} className="text-black p-2 w-full bg-gray-700 rounded-md">
-              <option value="pending">Pending</option>
-              <option value="canceled">Canceled</option>
-              <option value="complete">Complete</option>
-              <option value="overdue">Overdue</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="tags" className="block text-white">Tags</label>
-            <input id="tags" type="text" {...register("tags")} className="text-black p-2 w-full bg-gray-700 rounded-md" />
-          </div>
-
-          <div>
-           
-          </div>
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="p-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="relative">
+          <label htmlFor="user_id" className="block text-white mb-1">User </label>
+          <select id="user_id" {...register("user_id", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105">
+            <option value="">Select User</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>{user.username}</option>
+            ))}
+          </select>
         </div>
-
-        <div>
-          <label htmlFor="description" className="block text-white">Description</label>
-          <textarea id="description" {...register("description", { required: true })} className="text-black p-52 w-full bg-gray-700 rounded-md"></textarea>
+  
+        <div className="relative">
+          <label htmlFor="title" className="block text-white mb-1">Title</label>
+          <input id="title" type="text" {...register("title", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
         </div>
-
-        <div className="flex gap-4">
-          <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-md w-full md:w-auto" disabled={loading}>
-            {loading ? "Saving..." : editingTask ? "Update Task" : "Submit"}
+  
+        <div className="relative">
+          <label htmlFor="time_started" className="block text-white mb-1">Time Started</label>
+          <input id="time_started" type="datetime-local" {...register("time_started", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+        </div>
+  
+        <div className="relative">
+          <label htmlFor="time_ended" className="block text-white mb-1">Time Ended</label>
+          <input id="time_ended" type="datetime-local" {...register("time_ended", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+        </div>
+  
+        <div className="relative">
+          <label htmlFor="deadline" className="block text-white mb-1">Deadline</label>
+          <input id="deadline" type="datetime-local" {...register("deadline", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+        </div>
+  
+        <div className="relative">
+          <label htmlFor="status" className="block text-white mb-1">Status</label>
+          <select id="status" {...register("status", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105">
+            <option value="pending">Pending</option>
+            <option value="canceled">Canceled</option>
+            <option value="complete">Complete</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+  
+        <div className="relative">
+          <label htmlFor="tags" className="block text-white mb-1">Tags</label>
+          <input id="tags" type="text" {...register("tags")} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+        </div>
+      </div>
+  
+      <div className="relative mt-4">
+        <label htmlFor="description" className="block text-white mb-1">Description</label>
+        <textarea id="description" {...register("description", { required: true })} className="text-black p-40 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-100"></textarea>
+      </div>
+  
+      <div className="flex gap-4 mt-4">
+        <button type="submit" className="bg-magenta-800 hover:bg-magenta-700 text-white py-2 px-4 rounded-md w-full md:w-auto shadow-lg transform transition-transform duration-300 hover:scale-105" disabled={loading}>
+          {loading ? "Saving..." : editingTask ? "Update Task" : "Submit"}
+        </button>
+  
+        {editingTask && (
+          <button type="button" onClick={cancelEdit} className="bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-md w-full md:w-auto shadow-lg transform transition-transform duration-300 hover:scale-105">
+            Cancel Edit
           </button>
-
-          {editingTask && (
-            <button type="button" onClick={cancelEdit} className="bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-md w-full md:w-auto">
-              Cancel Edit
-            </button>
-          )}
-        </div>
-      </form>
-    );
+        )}
+      </div>
+    </form>
+  );
 };
 
 export default TaskForm;
