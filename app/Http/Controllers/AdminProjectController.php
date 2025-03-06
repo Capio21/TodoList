@@ -78,7 +78,7 @@ class AdminProjectController extends Controller
             'tags' => $request->tags,
         ]);
         // Send notification after profile update
-        $this->sendNotification('An admin asigned a task to user id { '. $request->user_id . ' }', $request->user_id);
+        $this->sendNotification('An admin asigned a task for you '. $request->user_id . ' Deadline: '. $request->deadline . ' Status: '. $request->status . '', $request->user_id);
         return response()->json($task, 201); // Return the created task with a 201 status code
     }
 
@@ -242,27 +242,25 @@ class AdminProjectController extends Controller
         return response()->json($archivedTasks);
     }
 
+
     public function restore($id)
     {
-        // Find the task, including soft-deleted ones if using SoftDeletes
-        $task = Task::withTrashed()->find($id);
-    
+        $task = Task::where('id', $id)->first();
+
         if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
+            return response()->json(['message' => 'Task not found.'], 404);
         }
-    
-        // Restore if soft deleted
-        if ($task->trashed()) {
-            $task->restore();
-        }
-    
-        // Set archived to false (if you're not using soft deletes)
-        $task->archived = false;
-        $task->save();
-    
-        return response()->json(['message' => 'Task restored successfully'], 200);
+
+        $task->archived = 0; // Ensure archived is set to 0
+        $task->save(); // Save changes
+
+        return response()->json([
+            'message' => 'Task restored successfully.',
+            'task' => $task
+        ]);
     }
-    
+
+
 
     public function toggleVisibility($id)
     {

@@ -20,10 +20,11 @@ return new class extends Migration
             $table->string('tags');
             $table->enum('status', ['pending', 'complete', 'overdue'])->default('pending');
             $table->boolean('archive')->default(false);
+            $table->json('checklist')->nullable(); // JSON column for checklist
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Assuming you have a users table
             $table->timestamps();
         });
     }
-    
 
     /**
      * Reverse the migrations.

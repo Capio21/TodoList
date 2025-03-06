@@ -8,6 +8,8 @@ use App\Http\Controllers\AdminProjectController;
 use App\Http\Controllers\MyToDoListController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\NotificationController;
+
+use App\Http\Controllers\ProgressController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -55,19 +57,6 @@ Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
 // Crud routes
 
 
-Route::get('/tasks', [MyToDoListController::class, 'index']);
-Route::post('/tasks', [MyToDoListController::class, 'store']);
-Route::get('/tasks/{id}', [MyToDoListController::class, 'show']);
-Route::put('/tasks/{id}', [MyToDoListController::class, 'update']);
-Route::delete('/tasks/{id}', [MyToDoListController::class, 'destroy']);
-Route::put('/tasks/{id}/archive', [MyToDoListController::class, 'archive']);
-Route::put('/tasks/{id}/restore', [MyToDoListController::class, 'restore']);
-
-Route::put('/tasks/{id}/archive', [MyToDoListController::class, 'archive']); // Archive task
-Route::put('/tasks/{id}/unarchive', [MyToDoListController::class, 'unarchive']); // Unarchive task
-Route::get('/tasks/{id}/unarchive', [MyToDoListController::class, 'unarchive']); // Unarchive task
-
-Route::put('/tasks/{id}/mark-done', [MyToDoListController::class, 'markAsDone']);
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -105,8 +94,7 @@ Route::delete('/tasks/{id}', [AdminProjectController::class, 'deleteTasks']);
 
 // Route::get('/tasks/archived', [AdminProjectController::class, 'archivedTasks']);
 Route::get('/archived-tasks', [AdminProjectController::class, 'getArchivedTasks']); 
-Route::put('/tasks/{id}/restore', [AdminProjectController::class, 'restore']);
-
+Route::put('/tasks/restore/{id}', [AdminProjectController::class, 'restore']);
 Route::put('/tasks/{id}/toggle-visibility', [AdminProjectController::class, 'toggleVisibility']);
 
 // Acitvity
@@ -121,9 +109,15 @@ Route::get('/user/{authToken}', [ActivityController::class, 'getUserByToken']);
 
 Route::put('/activities/{id}/archive', [ActivityController::class, 'archive']);
 Route::put('/activities/{id}/done', [ActivityController::class, 'markAsDone']);
-Route::put('/activities/{id}/restore', [ActivityController::class, 'restore']);
+
 Route::put('/activities/{id}/archive', [ActivityController::class, 'archiveActivity']);
 
+Route::get('/activities/{activityId}/checklists', [ActivityController::class, 'getChecklistItems']);
+Route::post('/activities/{activityId}/checklists', [ActivityController::class, 'storeChecklistItem']);
+Route::put('/activities/{activityId}/checklists/{checklistItemId}', [ActivityController::class, 'updateChecklistItem']);
+Route::delete('/activities/{activityId}/checklists/{checklistItemId}', [ActivityController::class, 'destroyChecklistItem']);
+Route::put('/activities/{id}/restore/', [ActivityController::class, 'restore']);
+Route::put('/activities/{id}/overdue', [ActivityController::class, 'markAsOverdue']);
 
 
 // NOTIFICATION
@@ -132,3 +126,13 @@ Route::get('/notifications', [NotificationController::class, 'getUserNotificatio
 Route::put('/notifications/{id}/markAsRead', [NotificationController::class, 'markAsRead']);
 Route::put('/notifications/markAllAsRead', [NotificationController::class, 'markAllAsRead']);
 
+
+
+
+//progress
+
+
+Route::get('/progress', [ProgressController::class, 'index']);
+Route::post('/progress', [ProgressController::class, 'store']);
+Route::put('/progress/{progress}', [ProgressController::class, 'update']);
+Route::delete('/progress/{progress}', [ProgressController::class, 'destroy']);

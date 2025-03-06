@@ -6,9 +6,26 @@ use App\Models\Activity;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Notification;
 
 class ActivityController extends Controller
 {
+
+
+
+
+    private function sendNotification($message, $userId)
+    {
+
+        $notification = Notification::create([
+            'user_id' => $userId,
+            'message' => $message,
+            'status' => 'unread',
+        ]);
+
+        // Broadcast the event
+        // broadcast(new NotificationSent($notification))->toOthers();
+    }
     // Fetch all activities (including filtering by status)
     public function index(Request $request, $authToken)
     {
@@ -176,6 +193,25 @@ public function restore($id)
     $activity->update(['archive' => 0]);
 
     return response()->json(['message' => 'Activity restored successfully', 'activity' => $activity], 200);
+}
+
+public function markAsOverdue (Request $request, $id)
+{
+    // Find the activity by ID
+    $activity = Activity::find($id);
+
+    if (!$activity) {
+        return response()->json(['message' => 'Activity not found'], 404);
+    }
+
+    // Update the status to 'overdue'
+    $activity->status = 'overdue';
+    $activity->save();
+
+    $this->sendNotification('An your personal task is going to overdue '. $activity->user_id . ' Deadline: '. $activity->due_date . ' Status: '. $activity->status . '', $activity->user_id, $activity->description );
+    return response()->json($activity, 201); // Return the created task with a 201 status code
+
+    return response()->json(['message' => 'Activity marked as overdue', 'activity' => $activity], 200);
 }
 
 }
