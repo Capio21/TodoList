@@ -50,8 +50,13 @@ class ActivityController extends Controller
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-    
-        return response()->json($query->get(), 200);
+
+        $records = $query->get();
+        foreach ($records as $record) {
+            $record['collaborator_name'] = User::find($record->collaborator)->username;
+        }
+        
+        return response()->json($records, 200);
     }
 
     public function getUserByToken($authToken)
@@ -76,14 +81,19 @@ class ActivityController extends Controller
             'tags' => 'nullable|string',
             'status' => 'required|in:pending,complete,overdue',
             'archive' => 'boolean',
-            'user_id' => 'required|exists:users,id' // Ensure the user exists
+            'user_id' => 'required|exists:users,id' ,// Ensure the user exists
+             'collaborators' => 'required|exists:users,id'
+
         ]);
+
+        $validated = $validator->validated();
+        $validated['collaborator'] = $validated['collaborators'][0];
     
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-    
-        $activity = Activity::create($request->all());
+
+        $activity = Activity::create($validated);
         return response()->json($activity, 201);
     }
     
@@ -114,7 +124,8 @@ class ActivityController extends Controller
                 'tags' => 'nullable|string',
                 'status' => 'sometimes|required|in:pending,complete,overdue',
                 'archive' => 'boolean',
-                'user_id' => 'required|exists:users,id' // Ensure user exists
+                'user_id' => 'required|exists:users,id',// Ensure user exists
+                  'collaborator' => 'required|exists:users,id'
             ]);
     
             if ($validator->fails()) {
@@ -175,11 +186,15 @@ class ActivityController extends Controller
         $activity = Activity::findOrFail($id);
         $activity->status = 'complete';
         $activity->save();
+        $this->sendNotification('Your personal task is done with your collaborator '. $activity->user_id . ' Deadline: '. $activity->due_date . ' Status: '. $activity->status . '', $activity->user_id, $activity->description );
 
         return response()->json(['message' => 'Activity marked as done successfully'], 200);
     } catch (\Exception $e) {
         return response()->json(['error' => 'Error marking activity as done', 'message' => $e->getMessage()], 500);
+        
     }
+
+    
 }
 
 public function restore($id)
@@ -193,6 +208,8 @@ public function restore($id)
     $activity->update(['archive' => 0]);
 
     return response()->json(['message' => 'Activity restored successfully', 'activity' => $activity], 200);
+
+
 }
 
 public function markAsOverdue (Request $request, $id)
@@ -208,7 +225,7 @@ public function markAsOverdue (Request $request, $id)
     $activity->status = 'overdue';
     $activity->save();
 
-    $this->sendNotification('An your personal task is going to overdue '. $activity->user_id . ' Deadline: '. $activity->due_date . ' Status: '. $activity->status . '', $activity->user_id, $activity->description );
+    $this->sendNotification('Your personal task is going to overdue '. $activity->user_id . ' Deadline: '. $activity->due_date . ' Status: '. $activity->status . '', $activity->user_id, $activity->description );
     return response()->json($activity, 201); // Return the created task with a 201 status code
 
     return response()->json(['message' => 'Activity marked as overdue', 'activity' => $activity], 200);

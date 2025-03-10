@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Notification;
+use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class AuthController extends Controller
         ]);
 
         // Broadcast the event
-        // broadcast(new NotificationSent($notification))->toOthers();
+        broadcast(new NotificationSent($notification))->toOthers();
     }
     public function getUsers()
     {
@@ -290,5 +291,23 @@ class AuthController extends Controller
 
         return response()->json(['user' => $user]);
     }
+
+    public function deleteAdmin($id)
+    {
+        // Find the admin by ID
+        $admin = User::find($id);
+
+        // Check if the admin exists
+        if (!$admin) {
+            return response()->json(['message' => 'Admin not found'], 404);
+        }
+
+        // Delete the admin
+        $admin->delete();
+
+        return response()->json(['message' => 'Admin deleted successfully'], 200);
+    }
+
+
 
 }

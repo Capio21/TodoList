@@ -10,6 +10,9 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\NotificationController;
 
 use App\Http\Controllers\ProgressController;
+use Illuminate\Support\Facades\Broadcast;
+use Pusher\Pusher;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -45,6 +48,7 @@ Route::get('/users', [AuthController::class, 'getUsers']);
 Route::get('/admins', [AuthController::class, 'getAdmins']);
 
 
+Route::delete('admins/{id}', [AuthController::class, 'deleteAdmin']);
 
 Route::get('/users', [AuthController::class, 'getUsers']);
 Route::put('/users/{id}', [AuthController::class, 'updateUser']);
@@ -136,3 +140,23 @@ Route::get('/progress', [ProgressController::class, 'index']);
 Route::post('/progress', [ProgressController::class, 'store']);
 Route::put('/progress/{progress}', [ProgressController::class, 'update']);
 Route::delete('/progress/{progress}', [ProgressController::class, 'destroy']);
+
+
+
+
+Route::get('/pusher-test', function () {
+    try {
+        $pusher = new Pusher(
+            config('broadcasting.connections.pusher.key'),
+            config('broadcasting.connections.pusher.secret'),
+            config('broadcasting.connections.pusher.app_id'),
+            ['cluster' => config('broadcasting.connections.pusher.options.cluster'), 'useTLS' => true]
+        );
+
+        $pusher->trigger('notifications', 'test-event', ['message' => 'Pusher is working!']);
+
+        return response()->json(['status' => 'success', 'message' => 'Pusher is connected!']);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+});
