@@ -84,7 +84,7 @@ export default function Sidebar() {
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+          <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-80">
             <h3 className="text-lg font-bold text-gray-700 mb-4">Confirm Logout</h3>
             <p className="text-gray-600 mb-4">Are you sure you want to logout?</p>
             <div className="flex justify-end space-x-3">

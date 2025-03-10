@@ -46,9 +46,9 @@ export default function Login() {
         <title>Login | Infinitech</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-
+  
       {/* Background Image */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-blue-900">
+      <div className="relative min-h-screen flex flex-col items-center justify-center bg-gray-900">
         <Image
           src="/cram.png"
           alt="Task Management Background"
@@ -56,11 +56,11 @@ export default function Login() {
           objectFit="cover"
           className="absolute top-0 left-0 w-full h-full opacity-20"
         />
-
+  
         {/* Login Box */}
-        <div className="relative bg-white/10 backdrop-blur-md p-8 rounded-lg shadow-lg w-96 border border-blue-500">
+        <div className="relative bg-gray-900/80 backdrop-blur-md p-8 rounded-lg shadow-lg w-96 border border-green-600">
           <h2 className="text-3xl font-bold text-white text-center mb-6">Infini-Sign In</h2>
-
+  
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-gray-300 text-lg font-medium mb-2">Username</label>
@@ -68,12 +68,12 @@ export default function Login() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-green-500"
                 placeholder="Enter your username"
                 required
               />
             </div>
-
+  
             {/* Password Field with Toggle */}
             <div className="relative">
               <label className="block text-gray-300 text-lg font-medium mb-2">Password</label>
@@ -81,7 +81,7 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-blue-500 pr-12"
+                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-green-500 pr-12"
                 placeholder="Enter your password"
                 required
               />
@@ -93,19 +93,19 @@ export default function Login() {
                 {showPassword ? <EyeOffIcon size={22} /> : <EyeIcon size={22} />}
               </button>
             </div>
-
+  
             {message && <p className="text-red-500 text-lg mt-2 text-center">{message}</p>}
-
+  
             {/* Buttons */}
             <div className="flex flex-col items-center space-y-3">
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg text-lg transition font-semibold"
+                className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg text-lg transition font-semibold"
                 disabled={loading}
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
-
+  
               <button
                 type="button"
                 className="w-full bg-gray-600 hover:bg-gray-500 text-white py-3 rounded-lg text-lg transition"
@@ -115,12 +115,13 @@ export default function Login() {
               </button>
             </div>
           </form>
-
+  
           <p className="text-lg text-center text-gray-400 mt-4">
-            New here? <a href="/Signup" className="text-blue-400 hover:underline">Create an account</a>
+            New here? <a href="/Signup" className="text-green-400 hover:underline">Create an account</a>
           </p>
         </div>
       </div>
     </>
   );
+  
 }

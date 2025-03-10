@@ -98,66 +98,70 @@ const TaskForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="p-4">
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="p-6 bg-gray-900 rounded-lg shadow-lg max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="relative">
-          <label htmlFor="user_id" className="block text-white mb-1">User </label>
-          <select id="user_id" {...register("user_id", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105">
+          <label htmlFor="user_id" className="block text-gray-300 mb-2">User</label>
+          <select id="user_id" {...register("user_id", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300">
             <option value="">Select User</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>{user.username}</option>
             ))}
           </select>
         </div>
-  
+
         <div className="relative">
-          <label htmlFor="title" className="block text-white mb-1">Title</label>
-          <input id="title" type="text" {...register("title", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+          <label htmlFor="title" className="block text-gray-300 mb-2">Title</label>
+          <input id="title" type="text" {...register("title", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
         </div>
-  
+
         <div className="relative">
-          <label htmlFor="time_started" className="block text-white mb-1">Time Started</label>
-          <input id="time_started" type="datetime-local" {...register("time_started", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+          <label htmlFor="time_started" className="block text-gray-300 mb-2">Time Started</label>
+          <input id="time_started" type="datetime-local" {...register("time_started", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
         </div>
-  
+
         <div className="relative">
-          <label htmlFor="time_ended" className="block text-white mb-1">Time Ended</label>
-          <input id="time_ended" type="datetime-local" {...register("time_ended", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+          <label htmlFor="time_ended" className="block text-gray-300 mb-2">Time Ended</label>
+          <input id="time_ended" type="datetime-local" {...register("time_ended", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
         </div>
-  
+
         <div className="relative">
-          <label htmlFor="deadline" className="block text-white mb-1">Deadline</label>
-          <input id="deadline" type="datetime-local" {...register("deadline", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+          <label htmlFor="deadline" className="block text-gray-300 mb-2">Deadline</label>
+          <input id="deadline" type="datetime-local" {...register("deadline", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
         </div>
-  
+
         <div className="relative">
-          <label htmlFor="status" className="block text-white mb-1">Status</label>
-          <select id="status" {...register("status", { required: true })} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105">
+          <label htmlFor="status" className="block text-gray-300 mb-2">Status</label>
+          <select id="status" {...register("status", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300">
             <option value="pending">Pending</option>
             <option value="canceled">Canceled</option>
             <option value="complete">Complete</option>
             <option value="overdue">Overdue</option>
           </select>
         </div>
-  
+
         <div className="relative">
-          <label htmlFor="tags" className="block text-white mb-1">Tags</label>
-          <input id="tags" type="text" {...register("tags")} className="text-black p-2 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-105" />
+          <label htmlFor="tags" className="block text-gray-300 mb-2">Tags</label>
+          <input id="tags" type="text" {...register("tags")} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
         </div>
       </div>
-  
-      <div className="relative mt-4">
-        <label htmlFor="description" className="block text-white mb-1">Description</label>
-        <textarea id="description" {...register("description", { required: true })} className="text-black p-40 w-full bg-magenta-600 rounded-md shadow-lg transform transition-transform duration-300 hover:scale-100"></textarea>
+
+      <div className="relative mt-6">
+        <label htmlFor="description" className="block text-gray-300 mb-2">Description</label>
+        <textarea id="description" {...register("description", { required: true })} className="text-gray-900 p-4 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300"></textarea>
       </div>
-  
-      <div className="flex gap-4 mt-4">
-        <button type="submit" className="bg-magenta-800 hover:bg-magenta-700 text-white py-2 px-4 rounded-md w-full md:w-auto shadow-lg transform transition-transform duration-300 hover:scale-105" disabled={loading}>
+
+      <div className="flex gap-6 mt-6 justify-between flex-wrap">
+        <button
+          type="submit"
+          className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md shadow-md transition duration-300 transform hover:scale-105"
+          disabled={loading}
+        >
           {loading ? "Saving..." : editingTask ? "Update Task" : "Submit"}
         </button>
-  
+
         {editingTask && (
-          <button type="button" onClick={cancelEdit} className="bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-md w-full md:w-auto shadow-lg transform transition-transform duration-300 hover:scale-105">
+          <button type="button" onClick={cancelEdit} className="bg-gray-600 hover:bg-gray-500 text-white py-2 px-6 rounded-md shadow-md transition duration-300 transform hover:scale-105">
             Cancel Edit
           </button>
         )}

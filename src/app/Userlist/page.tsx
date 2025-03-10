@@ -128,25 +128,26 @@ export default function UsersTable() {
         <title>Users List | Infi-Admin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-
-      <div className="flex min-h-screen bg-gray-900 text-white">
+  
+      <div className="flex min-h-screen bg-gray-800 text-gray-100">
         <Adminbar />
-
+  
         <div className="flex-1 flex flex-col items-center p-10">
-          <h2 className="text-3xl font-bold text-white text-center mb-6 drop-shadow-lg">
+          <h2 className="text-3xl font-bold text-green-500 text-center mb-6 drop-shadow-lg">
             User List
           </h2>
-
+  
           {loading ? (
             <p className="text-center text-gray-300 text-lg">Loading users...</p>
           ) : error ? (
             <p className="text-center text-red-500 text-lg">{error}</p>
           ) : (
-            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="w-full max-w-8xl grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-9">
+  
               {users.length > 0 ? (
                 users.map((user) => (
                   <div
-                    className="relative w-full p-5 bg-gray-700 bg-opacity-50 border border-gray-500 rounded-xl shadow-lg"
+                    className="relative w-full p-5 bg-gray-700 border border-green-600 rounded-xl shadow-lg"
                     key={user.id}
                   >
                     {/* Profile Image */}
@@ -154,28 +155,28 @@ export default function UsersTable() {
                       <img
                         src={user.profile_image ? `http://127.0.0.1:8000/${user.profile_image}` : "/default-profile.png"}
                         alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                        className="w-24 h-24 rounded-full object-cover border-4 border-green-500 shadow-lg"
                       />
                       <h3 className="mt-3 text-lg font-semibold text-white">{user.username}</h3>
                     </div>
-
+  
                     <p className="text-gray-300 text-center mt-2">📧 {user.email}</p>
-
+  
                     {/* Action Button with Ellipsis */}
                     <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}>
-                      <FiMoreVertical size={24} />
+                      <FiMoreVertical size={24} className="text-green-500" />
                     </div>
                     {menuOpen === user.id && (
-                      <div className="absolute top-10 right-4 bg-gray-800 shadow-md rounded-lg overflow-hidden w-32 z-10">
+                      <div className="absolute top-10 right-4 bg-gray-600 shadow-md rounded-lg overflow-hidden w-32 z-10">
                         <button
                           onClick={() => handleEditUser (user)}
-                          className="block w-full px-4 py-2 text-left text-white hover:bg-gray-700"
+                          className="block w-full px-4 py-2 text-left text-white hover:bg-gray-500"
                         >
                           📝 Edit
                         </button>
                         <button
                           onClick={() => handleDeleteUser (user.id)}
-                          className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-700"
+                          className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-500"
                         >
                           ❌ Delete
                         </button>
@@ -190,7 +191,7 @@ export default function UsersTable() {
           )}
         </div>
       </div>
-
+  
       {/* Edit Modal */}
       <EditModal
         isOpen={showEditModal}

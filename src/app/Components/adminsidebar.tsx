@@ -28,14 +28,14 @@ const SidebarNavigation = () => {
     try {
       const token = sessionStorage.getItem("authToken");
       if (!token) {
-        console.error("No token found, redirecting to login.");
+        console.error("No token found, greenirecting to login.");
         router.push("/login");
         return;
       }
       await axios.post(
         "http://127.0.0.1:8000/api/logout",
         {},
-        { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+        { headers: { Authorization: `Bearer ${token}` }, withCgreenentials: true }
       );
       sessionStorage.removeItem("authToken");
       router.push("/login");
@@ -46,15 +46,15 @@ const SidebarNavigation = () => {
 
   return (
     <>
-      <aside className="bg-gray-800 min-h-screen w-20 flex flex-col items-center py-4 justify-between">
+      <aside className="bg-gray-700 min-h-screen w-20 flex flex-col items-center py-4 justify-between">
         {/* Menu Items */}
         <ul className="text-white space-y-6">
           {menuItems.map((item) => (
             <li key={item.name} className="group relative flex flex-col items-center">
               <Link href={item.path} legacyBehavior>
                 <a
-                  className={`cursor-pointer transition duration-200 p-4 rounded-md hover:bg-red-700 flex flex-col items-center ${
-                    active === item.name ? "bg-gray-900 text-red-900" : ""
+                  className={`cursor-pointer transition duration-200 p-4 rounded-md hover:bg-green-700 flex flex-col items-center ${
+                    active === item.name ? "bg-gray-900 text-green-900" : ""
                   }`}
                   onClick={() => setActive(item.name)}
                 >
@@ -72,7 +72,7 @@ const SidebarNavigation = () => {
 
           {/* Logout Button */}
           <li
-            className="group relative flex flex-col items-center cursor-pointer transition duration-200 p-4 rounded-md hover:bg-red-700"
+            className="group relative flex flex-col items-center cursor-pointer transition duration-200 p-4 rounded-md hover:bg-green-700"
             onClick={confirmLogout}
           >
             <LogOut size={24} />
@@ -87,7 +87,7 @@ const SidebarNavigation = () => {
 
         {/* Logout Modal */}
         {showLogoutModal && (
-          <div className="fixed z-50 inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="fixed z-50 inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
             <div className="bg-gray-800 p-6 rounded-md shadow-lg text-center">
               <p className="mb-4 text-lg">Are you sure you want to log out?</p>
               <div className="flex justify-center gap-4">
@@ -97,7 +97,7 @@ const SidebarNavigation = () => {
                 >
                   Cancel
                 </button>
-                <button className="bg-red-600 text-white px-4 py-2 rounded-md" onClick={handleLogout}>
+                <button className="bg-green-600 text-white px-4 py-2 rounded-md" onClick={handleLogout}>
                   Logout
                 </button>
               </div>

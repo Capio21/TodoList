@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from "next/navigation";
-import Sidebar from "../Components/taskuser";
+import Sidebar from "../Components/Sidebar";
 
 interface Activity {
   id: number;
@@ -14,13 +14,15 @@ interface Activity {
   tags?: string;
   status: 'pending' | 'complete' | 'overdue';
   archive: boolean;
-  dependencyId?: number; // New field for task dependencies
+  dependencyId?: number;
+  collaborators?: number[]; // New field for collaborators
 }
 
 const alarmSound = new Audio("/alarm-sound.mp3");
 
 const playAlarm = () => {
   alarmSound.currentTime = 0;
+  
   alarmSound.play().catch(error => {
     console.error("Error playing alarm sound:", error);
   });
@@ -31,17 +33,18 @@ const API_BASE_URL = "http://127.0.0.1:8000/api";
 const ProgressBar = ({ percentage }: { percentage: number }) => {
   return (
     <div className="w-full bg-gray-300 rounded-full dark:bg-gray-800 shadow-inner p-1">
-      <div
-        className="bg-red-600 text-xs font-bold text-white text-center p-1 leading-none rounded-full transition-all duration-300 shadow-md"
-        style={{
-          width: `${percentage}%`,
-          background: "linear-gradient(135deg, #ff4d4d, #b30000)",
-          boxShadow: "0 4px 6px rgba(255, 0, 0, 0.5)",
-        }}
-      >
-        {percentage.toFixed(0)}%
-      </div>
+    <div
+      className="bg-green-600 text-xs font-bold text-white text-center p-1 leading-none rounded-full transition-all duration-300 shadow-md"
+      style={{
+        width: `${percentage}%`,
+        background: "linear-gradient(135deg, #32CD32, #228B22)", // Green gradient
+        boxShadow: "0 4px 6px rgba(0, 128, 0, 0.5)", // Green shadow
+      }}
+    >
+      {percentage.toFixed(0)}%
     </div>
+  </div>
+  
   );
 };
 
@@ -55,16 +58,18 @@ export default function ActivityPage() {
     tags: "", 
     status: 'pending', 
     archive: false,
-    dependencyId: undefined // Initialize dependencyId
+    dependencyId: undefined,
+    collaborators: [] // Initialize collaborators
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState("pending");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 1; // Set items per page to 1
+  const itemsPerPage = 1;
   const router = useRouter();
-  const [dependencies, setDependencies] = useState<Activity[]>([]); // New state for dependencies
+  const [dependencies, setDependencies] = useState<Activity[]>([]);
+  const [users, setUsers] = useState<{ id: number; username: string }[]>([]); // New state for users
 
   const fetchActivities = async () => {
     try {
@@ -75,9 +80,18 @@ export default function ActivityPage() {
       }
       const response = await axios.get(`${API_BASE_URL}/activities/${authToken}`);
       setActivities(response.data);
-      setDependencies(response.data); // Set dependencies from fetched activities
+      setDependencies(response.data);
     } catch (error) {
       console.error("Error fetching activities:", error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users`); // Adjust the endpoint as necessary
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
     }
   };
 
@@ -87,23 +101,25 @@ export default function ActivityPage() {
       for (const activity of activities) {
         const activityTime = new Date(activity.due_date);
         if (activity.status === 'pending') {
-          // Check if the due date has passed
           if (activityTime < now) {
-            // Update the status to overdue
             await handleOverdue(activity.id);
-          } else 
-           {
-            playAlarm();
+          } else {
+            if (activityTime.getFullYear() === now.getFullYear() &&
+                activityTime.getMonth() === now.getMonth() &&
+                activityTime.getDate() === now.getDate()) {
+              playAlarm();
+            }
           }
         }
       }
-    }, 500); // Check every minute
+    }, 500);
 
     return () => clearInterval(checkAlarms);
   }, [activities]);
 
   useEffect(() => {
     fetchActivities();
+    fetchUsers(); // Fetch users when the component mounts
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -127,7 +143,7 @@ export default function ActivityPage() {
         return;
       }
 
-      const newFormData = { ...formData, user_id: userId };
+      const newFormData = { ...formData, user_id: userId, collaborators: formData.collaborators || [] };
 
       if (editId) {
         await axios.put(`${API_BASE_URL}/activities/${editId}`, newFormData);
@@ -146,7 +162,7 @@ export default function ActivityPage() {
   };
 
   const resetForm = () => {
-    setFormData({ title: "", description: "", date_started: "", due_date: "", tags: "", status: 'pending', archive: false, dependencyId: undefined });
+    setFormData({ title: "", description: "", date_started: "", due_date: "", tags: "", status: 'pending', archive: false, dependencyId: undefined, collaborators: [] });
     setEditId(null);
     setIsOpen(false);
   };
@@ -160,7 +176,8 @@ export default function ActivityPage() {
       tags: activity.tags || "",
       status: activity.status,
       archive: activity.archive,
-      dependencyId: activity.dependencyId // Set dependencyId for editing
+      dependencyId: activity.dependencyId,
+      collaborators: activity.collaborators || [] // Set collaborators for editing
     });
     setEditId(activity.id);
     setIsOpen(true);
@@ -225,7 +242,7 @@ export default function ActivityPage() {
       console.log(`Updating activity ${id} to overdue status.`);
       const response = await axios.put(`${API_BASE_URL}/activities/${id}/overdue`);
       console.log("Response from server:", response.data);
-      fetchActivities(); // Refresh activities after updating
+      fetchActivities();
     } catch (error) {
       console.error("Error updating activity to overdue:", error);
       if (axios.isAxiosError(error)) {
@@ -234,154 +251,171 @@ export default function ActivityPage() {
     }
   };
 
-  // Pagination Logic
   const totalPages = Math.ceil((selectedStatus !== "archived" ? activities.filter(activity => activity.status === selectedStatus && !activity.archive).length : activities.filter(activity => activity.archive).length) / itemsPerPage);
   const currentActivities = (selectedStatus !== "archived" ? activities.filter(activity => activity.status === selectedStatus && !activity.archive) : activities.filter(activity => activity.archive)).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Calculate completion percentage
   const completedActivities = activities.filter(activity => activity.status === 'complete').length;
   const totalActivities = activities.length;
   const completionPercentage = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
 
   return (
-    <>
-      <div className="flex">
-        <Sidebar />
-        <div className="m-h-auto flex-1 max-h-25 bg-gray-900 text-white flex items-center justify-center p-9">
-          <div className="w-full max-h-50 max-w-auto bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
-            <button
-              onClick={() => setIsOpen(true)}
-              className="inline-block px-4 py-2 text-2xl font-bold text-white bg-red-500 border-2 border-black rounded-lg shadow-[5px_5px_0px_#000] transition-all duration-300 cursor-pointer hover:bg-white hover:text-red-500 hover:border-red-500 hover:shadow-[5px_5px_0px_#ff5252] active:bg-yellow-300 active:shadow-none active:translate-y-1"
+  <>
+    <div className="flex min-h-screen bg-gray-900 text-white items-center justify-center p-0.1">
+      <Sidebar />
+      <div className="m-h-auto flex-1 max-h-25 bg-gray-900 text-white flex items-center justify-center p-9">
+        <div className="p-1 border-1 border-green-700 w-full max-h-50 max-w-auto bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="inline-block px-4 py-2 text-2xl font-bold text-black bg-green-500 border-2 border-black rounded-lg shadow-[5px_5px_0px_#000] transition-all duration-300 cursor-pointer hover:bg-gray-900 hover:text-green-500 hover:border-green-500 hover:shadow-[5px_5px_0px_#ff5252] active:bg-yellow-300 active:shadow-none active:translate-y-1"
+          >
+            Add Task +
+          </button>
+
+          <div className="mt-6">
+            <h1 className="text-4xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
+              My Personal Task
+            </h1>
+            <ProgressBar percentage={completionPercentage} />
+            <br />
+
+            <select 
+              onChange={(e) => setSelectedStatus(e.target.value)} 
+              className="w-full p-2 border-4 border-green-700 bg-gray-900 text-green-500 font-bold mb-4 rounded-lg shadow-lg focus:outline-none focus:border-green-500 hover:bg-gray-900 transition-all"
             >
-              Add Task +
-            </button>
+              <option value="pending" className="bg-gray-900 text-white">Pending</option>
+              <option value="complete" className="bg-gray-900 text-white">Complete</option>
+              <option value="overdue" className="bg-gray-900 text-white">Overdue</option>
+              <option value="archived" className="bg-gray-900 text-white">Archived</option>
+            </select>
 
-            <div className="mt-6">
-              <h1 className="text-4xl font-bold mb-4 text-center"> 📊 Personal Task</h1>
-              <ProgressBar percentage={completionPercentage} />
-              <br />
-              
-              <select onChange={(e) => setSelectedStatus(e.target.value)} className="w-full p-2 border-4 border-black text-black font-bold mb-4 rounded">
-                <option value="pending">Pending</option>
-                <option value="complete">Complete</option>
-                <option value="overdue">Overdue</option>
-                <option value="archived">Archived</option>
-              </select>
-              <div className="flex justify-center">
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-6 max-w-4xl w-full">
-                  {currentActivities.map(activity => {
-                    const hasUnfinishedDependency = activity.dependencyId && activities.find(dep => dep.id === activity.dependencyId)?.status !== 'complete';
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6 max-w-4xl w-full">
+                {currentActivities.map(activity => {
+                  const hasUnfinishedDependency = activity.dependencyId && activities.find(dep => dep.id === activity.dependencyId)?.status !== 'complete';
 
-                    return (
-                      <div 
-                        key={activity.id} 
-                        className={`p-4 border-4 border-black bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center ${hasUnfinishedDependency ? 'filter blur-sm' : ''}`}
-                      >
-                        <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
-                        <h3 className="text-xl font-bold mb-2">{activity.description}</h3>
-                        <p className="mb-4 text-gray-400">Due: {activity.due_date}</p>
-                        <p className="mb-4 text-gray-400">Tags: {activity.tags}</p>
-                        <p className="mb-4 text-gray-400">Status: {activity.status}</p>
-                        <div className="flex flex-row justify-center gap-2">
+                  return (
+                    <div 
+                      key={activity.id} 
+                      className={`p-4 border border-green-700 bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center ${hasUnfinishedDependency ? 'filter blur-sm' : ''}`}
+                    >
+                      <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
+                      <h3 className="text-xl font-bold mb-2">{activity.description}</h3>
+                      <p className="mb-4 text-gray-400">Due: {activity.due_date}</p>
+                      <p className="mb-4 text-gray-400">Tags: {activity.tags}</p>
+                      <p className="mb-4 text-gray-400">Status: {activity.status}</p>
+                      <p className="mb-4 text-gray-400">Collaborators: {activity.collaborator_name}</p>
+                      <div className="flex flex-row justify-center gap-2">
+                        <button 
+                          onClick={() => handleEdit(activity)}
+                          className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                        >
+                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                          <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Edit</span>
+                        </button>
+                        
+                        {activity.status === 'pending' && !activity.archive && !hasUnfinishedDependency && (
                           <button 
-                            onClick={() => handleEdit(activity)}
+                            onClick={() => handleMarkAsDone(activity.id)}
                             className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
                           >
                             <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-red-900 via-red-700 to-red-900"></span>
-                            <span className="relative block px-5 py-2 rounded-lg text-white bg-red-600 transform -translate-y-1 transition-transform duration-600 ease-out">Edit</span>
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                            <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Mark as Done</span>
                           </button>
-                      
-                          {activity.status === 'pending' && !activity.archive && !hasUnfinishedDependency && (
-                            <button 
-                              onClick={() => handleMarkAsDone(activity.id)}
-                              className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                            >
-                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                              <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Mark as Done</span>
-                            </button>
-                          )}
-                      
-                          {activity.archive ? (
-                            <button 
-                              onClick={() => handleRestore(activity.id)}
-                              className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                            >
-                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
-                              <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Restore</span>
-                            </button>
-                          ) : (
-                            <button 
-                              onClick={() => handleArchive(activity.id)}
-                              className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                            >
-                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                              <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
-                              <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Archive</span>
-                            </button>
-                          )}
-                      
+                        )}
+                        
+                        {activity.archive ? (
                           <button 
-                            onClick={() => handleDelete(activity.id)}
+                            onClick={() => handleRestore(activity.id)}
                             className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
                           >
                             <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-red-900 via-red-700 to-red-900"></span>
-                            <span className="relative block px-5 py-2 rounded-lg text-white bg-red-600 transform -translate-y-1 transition-transform duration-600 ease-out">Delete</span>
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
+                            <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Restore</span>
                           </button>
-                        </div>
+                        ) : (
+                          <button 
+                            onClick={() => handleArchive(activity.id)}
+                            className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                          >
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
+                            <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Archive</span>
+                          </button>
+                        )}
+                        
+                        <button 
+                          onClick={() => handleDelete(activity.id)}
+                          className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                        >
+                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                          <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Delete</span>
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="flex justify-between mt-4">
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-                  disabled={currentPage === 1} 
-                  className="bg-gray-600 p-2 rounded text-white"
-                >
-                  Previous
-                </button>
-                <span className="self-center text-white">Page {currentPage} of {totalPages}</span>
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-                  disabled={currentPage === totalPages} 
-                  className="bg-gray-600 p-2 rounded text-white transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
-                >
-                  Next
-                </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            {isOpen && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-                <div className="bg-red-900 p-6 rounded-lg shadow-lg w-full max-w-md relative">
-                  <button onClick={() => resetForm()} className="absolute top-2 right-2 text-white font-bold text-xl">×</button>
-                  <h2 className="text-lg font-bold mb-4">{editId ? "Edit" : "Add"} Activity</h2>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
-                    <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md"></textarea>
-                    <input type="date" name="date_started" value={formData.date_started} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
-                    <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
-                    <input type="text" name="tags" placeholder="Tags" value={formData.tags} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" />
-                    {/* <select name="dependencyId" value={formData.dependencyId} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md">
-                      <option value="">No Dependency</option>
-                      {dependencies.map(dep => (
-                        <option key={dep.id} value={dep.id}>{dep.title}</option>
-                      ))}
-                    </select> */}
-                    <button type="submit" className="w-full bg-blue-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-blue-900">{editId ? "Update" : "Add"} Activity</button>
-                  </form>
-                </div>
-              </div>
-            )}
+
+            {/* Pagination Controls */}
+            <div className="flex justify-between mt-4">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                disabled={currentPage === 1} 
+                className="bg-gray-600 p-2 rounded text-white"
+              >
+                Previous
+              </button>
+              <span className="self-center text-white">Page {currentPage} of {totalPages}</span>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                disabled={currentPage === totalPages} 
+                className="bg-gray-600 p-2 rounded text-white transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
+              >
+                Next
+              </button>
+            </div>
           </div>
+          {isOpen && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+              <div className="bg-green-900 p-6 rounded-lg shadow-lg w-full max-w-md relative">
+                <button onClick={() => resetForm()} className="absolute top-2 right-2 text-white font-bold text-xl">×</button>
+                <h2 className="text-lg font-bold mb-4">{editId ? "Edit" : "Add"} Activity</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
+                  <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md"></textarea>
+                  <input type="date" name="date_started" value={formData.date_started} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
+                  <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
+                  <input type="text" name="tags" placeholder="Tags" value={formData.tags} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" />
+                  
+                  <select
+                    name="collaborators"
+                    multiple
+                    value={formData.collaborators || []}
+                    onChange={(e) => {
+                      const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+                      setFormData({ ...formData, collaborators: selectedOptions });
+                    }}
+                    className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md"
+                  >
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.username}
+                      </option>
+                    ))}
+                  </select>
+               
+                  <button type="submit" className="w-full bg-blue-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-blue-900">{editId ? "Update" : "Add"} Activity</button>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </>
-  );
+    </div>
+  </>
+);
 }
