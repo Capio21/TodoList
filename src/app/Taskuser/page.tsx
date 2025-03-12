@@ -104,11 +104,16 @@ export default function ActivityPage() {
           if (activityTime < now) {
             await handleOverdue(activity.id);
           } else {
-            if (activityTime.getFullYear() === now.getFullYear() &&
-                activityTime.getMonth() === now.getMonth() &&
-                activityTime.getDate() === now.getDate()) {
-              playAlarm();
-            }
+          
+           if (
+  activityTime.getFullYear() === now.getFullYear() &&
+  activityTime.getMonth() === now.getMonth() &&
+  activityTime.getDate() === now.getDate() &&
+  activityTime.getHours() === now.getHours() &&
+  activityTime.getMinutes() - 1 === now.getMinutes()
+) {
+  playAlarm(); // Trigger alarm at exact time
+}
           }
         }
       }
@@ -260,19 +265,19 @@ export default function ActivityPage() {
 
   return (
   <>
-    <div className="flex min-h-screen bg-gray-900 text-white items-center justify-center p-0.1">
+    <div className="flex min-h-screen bg-gray-900 text-white items-center justify-center p-2">
       <Sidebar />
-      <div className="m-h-auto flex-1 max-h-25 bg-gray-900 text-white flex items-center justify-center p-9">
-        <div className="p-1 border-1 border-green-700 w-full max-h-50 max-w-auto bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700">
+      <div className="flex-1 bg-gray-900 text-white flex items-center justify-center p-10">
+        <div className="p-4 border border-green-700 w-full max-w-4xl bg-gray-900 rounded-lg shadow-lg">
           <button
             onClick={() => setIsOpen(true)}
-            className="inline-block px-4 py-2 text-2xl font-bold text-black bg-green-500 border-2 border-black rounded-lg shadow-[5px_5px_0px_#000] transition-all duration-300 cursor-pointer hover:bg-gray-900 hover:text-green-500 hover:border-green-500 hover:shadow-[5px_5px_0px_#ff5252] active:bg-yellow-300 active:shadow-none active:translate-y-1"
+            className="inline-flex items-center gap-1 px-3 py-1 text-sm font-bold text-black bg-green-500 border-2 border-black rounded-full shadow-lg transition-all duration-300 ease-in-out cursor-pointer hover:bg-gray-900 hover:text-green-500 hover:border-green-500 hover:shadow-green-700 active:bg-green-300 active:shadow-none active:translate-y-1"
           >
-            Add Task +
+            ➕ 
           </button>
 
-          <div className="mt-6">
-            <h1 className="text-4xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
+          <div className="mt-4">
+            <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
               My Personal Task
             </h1>
             <ProgressBar percentage={completionPercentage} />
@@ -289,74 +294,70 @@ export default function ActivityPage() {
             </select>
 
             <div className="flex justify-center">
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-6 max-w-4xl w-full">
-                {currentActivities.map(activity => {
-                  const hasUnfinishedDependency = activity.dependencyId && activities.find(dep => dep.id === activity.dependencyId)?.status !== 'complete';
-
-                  return (
-                    <div 
-                      key={activity.id} 
-                      className={`p-4 border border-green-700 bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center ${hasUnfinishedDependency ? 'filter blur-sm' : ''}`}
-                    >
-                      <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
-                      <h3 className="text-xl font-bold mb-2">{activity.description}</h3>
-                      <p className="mb-4 text-gray-400">Due: {activity.due_date}</p>
-                      <p className="mb-4 text-gray-400">Tags: {activity.tags}</p>
-                      <p className="mb-4 text-gray-400">Status: {activity.status}</p>
-                      <p className="mb-4 text-gray-400">Collaborators: {activity.collaborator_name}</p>
-                      <div className="flex flex-row justify-center gap-2">
+              <div className="grid grid-cols-1 gap-4 w-full">
+                {currentActivities.length > 0 && (
+                  <div 
+                    key={currentActivities[0].id} 
+                    className={`p-4 border border-green-700 bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center`}
+                  >
+                    <h3 className="text-lg md:text-xl font-bold mb-2">{currentActivities[0].title}</h3>
+                    <h3 className="text-lg md:text-xl font-bold mb-2">{currentActivities[0].description}</h3>
+                    <p className="mb-2 text-gray-400">Due: {currentActivities[0].due_date}</p>
+                    <p className="mb-2 text-gray-400">Tags: {currentActivities[0].tags}</p>
+                    <p className="mb-2 text-gray-400">Status: {currentActivities[0].status}</p>
+                    <p className="mb-2 text-gray-400">Collaborators: {currentActivities[0].collaborator_name}</p>
+                    <div className="flex flex-row justify-center gap-2">
+                      <button 
+                        onClick={() => handleEdit(currentActivities[0])}
+                        className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                      >
+                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
+                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                        <span className="relative block px-3 py-1 rounded-full text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Edit</span>
+                      </button>
+                      
+                      {currentActivities[0].status === 'pending' && !currentActivities[0].archive && (
                         <button 
-                          onClick={() => handleEdit(activity)}
+                          onClick={() => handleMarkAsDone(currentActivities[0].id)}
                           className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
                         >
-                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                          <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Edit</span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                          <span className="relative block px-3 py-1 rounded-full text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Mark as Done</span>
                         </button>
-                        
-                        {activity.status === 'pending' && !activity.archive && !hasUnfinishedDependency && (
-                          <button 
-                            onClick={() => handleMarkAsDone(activity.id)}
-                            className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                          >
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                            <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Mark as Done</span>
-                          </button>
-                        )}
-                        
-                        {activity.archive ? (
-                          <button 
-                            onClick={() => handleRestore(activity.id)}
-                            className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                          >
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
-                            <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Restore</span>
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleArchive(activity.id)}
-                            className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                          >
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                            <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
-                            <span className="relative block px-5 py-2 rounded-lg text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out">Archive</span>
-                          </button>
-                        )}
-                        
+                      )}
+                      
+                      {currentActivities[0].archive ? (
                         <button 
-                          onClick={() => handleDelete(activity.id)}
+                          onClick={() => handleRestore(currentActivities[0].id)}
                           className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
                         >
-                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-black opacity-25 transform translate-y-2 transition-transform duration-600 ease-out"></span>
-                          <span className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                          <span className="relative block px-5 py-2 rounded-lg text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out">Delete</span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
+                          <span className="relative block px-3 py-1 rounded-full text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Restore</span>
                         </button>
-                      </div>
+                      ) : (
+                        <button 
+                          onClick={() => handleArchive(currentActivities[0].id)}
+                          className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                        >
+                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
+                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
+                          <span className="relative block px-3 py-1 rounded-full text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Archive</span>
+                        </button>
+                      )}
+                      
+                      <button 
+                        onClick={() => handleDelete(currentActivities[0].id)}
+                        className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
+                      >
+                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
+                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
+                        <span className="relative block px-3 py-1 rounded-full text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Delete</span>
+                      </button>
                     </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -365,17 +366,17 @@ export default function ActivityPage() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
                 disabled={currentPage === 1} 
-                className="bg-gray-600 p-2 rounded text-white"
+                className="bg-gray-600 p-2 rounded text-white text-xs"
               >
-                Previous
+                -
               </button>
-              <span className="self-center text-white">Page {currentPage} of {totalPages}</span>
+              <span className="self-center text-white text-xs">Page {currentPage} of {totalPages}</span>
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
                 disabled={currentPage === totalPages} 
-                className="bg-gray-600 p-2 rounded text-white transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
+                className="bg-gray-600 p-2 rounded text-white text-xs transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
               >
-                Next
+                -
               </button>
             </div>
           </div>

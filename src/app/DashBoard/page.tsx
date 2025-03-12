@@ -3,46 +3,48 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Adminbar from "../Components/adminsidebar";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+} from "recharts";
 import "react-datepicker/dist/react-datepicker.css";
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
-const CustomCalendar = ({ selectedDate, onDateSelect }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-
-  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-
-  const handleDateClick = (day) => {
-    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    onDateSelect(newDate);
-  };
-
+const TaskList = ({ tasks }) => {
   return (
-    <div className="bg-gray-800 p-4 rounded-xl shadow-lg w-full flex flex-col items-center">
-      <h2 className="text-lg font-semibold text-center mb-2 text-green-300">{currentMonth.toLocaleString('default', { month: 'long' })} {currentMonth.getFullYear()}</h2>
-      <div className="grid grid-cols-7 gap-1">
-        {Array.from({ length: firstDay }).map((_, index) => (
-          <div key={index} className="text-transparent">.</div> // Empty cells for alignment
-        ))}
-        {Array.from({ length: daysInMonth }).map((_, index) => {
-          const day = index + 1;
-          return (
-            <div
-              key={day}
-              onClick={() => handleDateClick(day)}
-              className={`flex items-center justify-center cursor-pointer w-12 h-12 rounded-lg transition duration-200 
-                ${selectedDate.getDate() === day && selectedDate.getMonth() === currentMonth.getMonth() ? 'bg-green-500 text-white' : 'bg-gray-700 text-green-200 hover:bg-gray-600'}`}
-            >
-              <span className="text-2xl font-bold">{day}</span>
-            </div>
-          );
-        })}
+    <div className="bg-gray-800 p-4 rounded-xl shadow-lg w-full ">
+      <h2 className="text-lg font-semibold text-center mb-2 text-green-300">Tasks</h2>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Title</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Due Date</th>
+            </tr>
+          </thead>
+          <tbody className="bg-gray-700 divide-y divide-gray-600">
+            {tasks.map((task) => (
+              <tr key={task.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{task.title}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{task.status}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{task.deadline}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <p className="text-center text-gray-400 mt-2">
-        Selected: <span className="font-bold">{selectedDate.toDateString()}</span>
-      </p>
     </div>
   );
 };
@@ -52,9 +54,11 @@ export default function Dashboard() {
   const [pendingCount, setPendingCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [archivedCount, setArchivedCount] = useState(0);
+  const [userCount, setUserCount] = useState(0);
   const [taskData, setTaskData] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [userData, setUserData] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [taskCountsByDate, setTaskCountsByDate] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,12 +77,27 @@ export default function Dashboard() {
           return acc;
         }, {});
 
-        const formattedData = Object.keys(groupedTasks).map((date) => ({
+        setTaskCountsByDate(groupedTasks);
+
+        const usersRes = await axios.get(`${API_BASE_URL}/users`);
+        const users = usersRes.data;
+
+        setUserCount(users.length);
+
+        const groupedUsers = users.reduce((acc, user) => {
+          const date = new Date(user.created_at).toLocaleDateString();
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+        }, {});
+
+        const formattedUserData = Object.keys(groupedUsers).map((date) => ({
           date,
-          tasks: groupedTasks[date],
+          users: groupedUsers[date],
         }));
 
-        setTaskData(formattedData);
+        setUserData(formattedUserData);
+        setTaskData(tasks);
+
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -90,7 +109,6 @@ export default function Dashboard() {
     return () => clearInterval(clockInterval);
   }, []);
 
-  // Data for the donut chart
   const data = [
     { name: 'Pending', value: pendingCount },
     { name: 'Completed', value: completedCount },
@@ -100,20 +118,16 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-900 text-white">
-      {/* Sidebar */}
       <Adminbar />
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col items-center p-5 w-full">
         <h1 className="text-3xl font-bold mb-4 text-green-300">Admin Dashboard</h1>
 
-        {/* Date & Time */}
         <div className="text-center mb-6">
           <p className="text-lg font-semibold text-green-200">{currentTime.toLocaleDateString()}</p>
           <p className="text-2xl font-bold text-green-400">{currentTime.toLocaleTimeString()}</p>
         </div>
 
-        {/* Task Stats - Single Row */}
         <div className="w-full flex justify-center gap-6 mb-5 flex-wrap">
           <div className="bg-gray-700 p-6 rounded-xl shadow-lg text-center w-48">
             <h2 className="text-xl font-semibold text-gray-200">Total Tasks</h2>
@@ -129,20 +143,23 @@ export default function Dashboard() {
             <h2 className="text-xl font-semibold text-gray-200">Completed</h2>
             <p className="text-4xl font-bold text-gray-500">{completedCount}</p>
           </div>
+
+          <div className="bg-gray-700 p-6 rounded-xl shadow-lg text-center w-48">
+            <h2 className="text-xl font-semibold text-gray-200">Total Users</h2>
+            <p className="text-4xl font-bold text-blue-400">{userCount}</p>
+          </div>
         </div>
 
-        {/* Chart & Custom Calendar */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Donut Chart */}
-          <div className="bg-gray-800 p-4 rounded-xl shadow-lg w-full flex flex-col items-center">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="bg-gray-800 p-2 rounded-xl shadow-lg w-full flex flex-col items-center">
             <h2 className="text-lg font-semibold text-center mb-2 text-green-300">Task Progress</h2>
-            <ResponsiveContainer width={350} height={350}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={80} // Adjusted for a cleaner donut look
+                  innerRadius={80}
                   outerRadius={120}
                   paddingAngle={5}
                   dataKey="value"
@@ -155,11 +172,26 @@ export default function Dashboard() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+
+        
           </div>
 
-          {/* Custom Calendar */}
-          <CustomCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+          {/* Task List Component */}
+          <TaskList tasks={taskData} />
         </div>
+        <div className="bg-gray-800 p-4 rounded-xl shadow-lg w-full mt-6">
+              <h2 className="text-lg font-semibold text-center mb-2 text-green-300">Users per Date</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={userData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="users" stroke="#00C49F" activeDot={{ r: 8 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
       </main>
     </div>
   );

@@ -96,9 +96,9 @@ export default function ActivityPage() {
   const chartData = Object.values(groupedData);
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-gray-900 items-right justify-center">
+    <div className="flex min-h-screen bg-gray-900 text-gray-900">
       <Sidebar />
-      <div className="flex-1 p-6 md:p-9">
+      <div className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="w-full bg-gradient-to-r from-green-500 to-gray-400 rounded-xl p-4 mb-6 flex flex-col sm:flex-row justify-between items-center shadow-lg">
           <div className="text-lg font-bold text-white px-4 py-2 rounded-md bg-gradient-to-r from-green-500 to-green-400 shadow-md hover:shadow-lg transition-all">
             Overview
@@ -121,18 +121,18 @@ export default function ActivityPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-xl px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xl px-2 sm:px-4 lg:px-6">
           {[{ label: "Pending", count: pendingCount, icon: "🕒" },
             { label: "Complete", count: completeCount, icon: "✅" },
             { label: "Overdue", count: overdueCount, icon: "⚠️" },
             { label: "Archived", count: archiveCount, icon: "📦" }
           ].map((item, index) => (
-            <div key={index} className="p-6 bg-gray-300 rounded-2xl shadow-md flex items-center space-x-4">
-              <div className="p-5 bg-green-900 rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl">{item.icon}</span>
+            <div key={index} className="p-4 bg-gray-300 rounded-2xl shadow-md flex items-center space-x-4">
+              <div className="p-4 bg-green-900 rounded-full flex items-center justify-center">
+                <span className="text-white text-2xl">{item.icon}</span>
               </div>
               <div>
-                <div className="text-2xl font-bold">{item.count}</div>
+                <div className="text-xl font-bold">{item.count}</div>
                 <div className="text-gray-700 text-lg">{item.label}</div>
               </div>
             </div>

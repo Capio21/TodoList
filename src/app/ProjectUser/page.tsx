@@ -86,12 +86,11 @@ export default function TodoPage() {
       setCurrentPage(currentPage - 1);
     }
   };
-
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100">
       <Sidebar />
-      <div className="flex-1 p-6 flex flex-col items-center">
-        <h1 className="text-4xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-gray-500 drop-shadow-lg">
+      <div className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col items-center">
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-gray-500 drop-shadow-lg">
           ADMIN TASK
         </h1>
         {loading ? (
@@ -110,7 +109,7 @@ export default function TodoPage() {
                   return (
                     <div
                       key={task.id}
-                      className={`relative border-4 border-gray-700 bg-gray-800 p-6 shadow-lg transition-all w-full md:w-auto rounded-lg flex flex-col items-center ${
+                      className={`relative border-4 border-gray-700 bg-gray-800 p-4 md:p-6 shadow-lg transition-all w-full md:w-11/12 lg:w-3/4 rounded-lg flex flex-col items-center ${
                         previousTaskCompleted ? "" : "opacity-50 blur-md"
                       }`}
                     >
@@ -129,7 +128,7 @@ export default function TodoPage() {
                               .range {
                                 position: relative;
                                 background-color: #2A2A2A;
-                                width: 400px;
+                                width: 100%;
                                 height: 25px;
                                 transform: skew(30deg);
                                 font-family: 'Orbitron', monospace;
@@ -198,13 +197,17 @@ export default function TodoPage() {
                     onClick={prevPage}
                     disabled={currentPage === 0}
                     className="px-4 py-2 bg-gray-700 border-2 border-gray-500 shadow-md font-bold rounded hover:bg-gray-600 disabled:opacity-50"
-                  >◀ Previous</button>
+                  >
+                    ◀ Previous
+                  </button>
                   <span className="text-lg font-semibold">{currentPage + 1} / {tasks.length}</span>
                   <button
                     onClick={nextPage}
                     disabled={currentPage >= tasks.length - 1}
                     className="px-4 py-2 bg-gray-700 border-2 border-gray-500 shadow-md font-bold rounded hover:bg-gray-600 disabled:opacity-50"
-                  >Next ▶</button>
+                  >
+                    Next ▶
+                  </button>
                 </div>
               </div>
             )}

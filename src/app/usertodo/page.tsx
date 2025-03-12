@@ -70,6 +70,7 @@ export default function Dashboard() {
   const editTask = (task: Task) => {
     setEditingTask(task);
     setShowEditModal(true);
+    setShowTableModal(false); // Close the modal when editing a task
   };
 
   const archiveTask = async (taskId: number) => {
@@ -157,112 +158,114 @@ export default function Dashboard() {
         </div>
   
         {showTableModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div
-      className="relative p-8 rounded-lg border-4 border-green-800 shadow-lg bg-gray-700 w-full max-w-4xl h-auto transition-all duration-300"
-      style={{ translate: "-6px -6px" }}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-xl font-extrabold bg-gray-600 px-8 py-4 border-b-4 border-green-800 text-white rounded-lg shadow-lg">
-          Task Table
-        </div>
-        <button
-          onClick={() => setShowTableModal(false)}
-          className="text-white bg-green-600 rounded px-6 py-3"
-        >
-          Close
-        </button>
-      </div>
-
-      <div className="max-h-96 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-6">
-          {currentTask && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div
-              key={currentTask.id}
-              className="relative p-6 rounded-lg border-4 border-green-800 shadow-md bg-gray-600 transition-all duration-300 text-center"
+              className="relative p-8 rounded-lg border-4 border-green-800 shadow-lg bg-gray-700 w-full max-w-4xl h-auto transition-all duration-300"
+              style={{ translate: "-6px -6px" }}
             >
-              <span
-                className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold text-white rounded-md ${
-                  currentTask.status === 'done' ? 'bg-green-600' :
-                  currentTask.status === 'pending' ? 'bg-yellow-500' :
-                  currentTask.status === 'overdue' ? 'bg-red-600' :
-                  'bg-gray-500'
-                }`}
-              >
-                {currentTask.status.toUpperCase()}
-              </span>
+              <div className="flex justify-between items-center mb-6">
+                <div className="text-xl font-extrabold bg-gray-600 px-8 py-4 border-b-4 border-green-800 text-white rounded-lg shadow-lg">
+                  Task Table
+                </div>
+                <button
+                  onClick={() => setShowTableModal(false)}
+                  className="text-white bg-green-600 rounded px-6 py-3"
+                >
+                  Close
+                </button>
+              </div>
 
-              <h4 className="text-xl font-bold text-white">{currentTask.title}</h4>
-              <p className="text-gray-300 text-sm">
-                {expandedDescription ? currentTask.description : `${currentTask.description.substring(0, 120)}...`}
-                {currentTask.description.length > 120 && (
-                  <button
-                    onClick={() => setExpandedDescription(!expandedDescription)}
-                    className="text-blue-400 hover:underline ml-1"
-                  >
-                    {expandedDescription ? "Read Less" : "Read More"}
-                  </button>
-                )}
-              </p>
-              <p className="text-sm text-gray-300"><strong>Deadline:</strong> {currentTask.deadline}</p>
-              <p className="text-sm text-gray-300"><strong>Started:</strong> {currentTask.time_started}</p>
-              <p className="text-sm text-gray-300"><strong>Ended:</strong> {currentTask.time_ended}</p>
+              <div className="max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 gap-6">
+                  {currentTask && (
+                    <div
+                      key={currentTask.id}
+                      className="relative p-6 rounded-lg border-4 border-green-800 shadow-md bg-gray-600 transition-all duration-300 text-center"
+                    >
+                      <span
+                        className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold text-white rounded-md ${
+                          currentTask.status === 'done' ? 'bg-green-600' :
+                          currentTask.status === 'pending' ? 'bg-yellow-500' :
+                          currentTask.status === 'overdue' ? 'bg-red-600' :
+                          'bg-gray-500'
+                        }`}
+                      >
+                        {currentTask.status.toUpperCase()}
+                      </span>
 
-              <div className="mt-6 flex flex-wrap gap-4 justify-center">
+                      <h4 className="text-xl font-bold text-white">{currentTask.title}</h4>
+                      <p className="text-gray-300 text-sm">
+                        {expandedDescription ? currentTask.description : `${currentTask.description.substring(0, 120)}...`}
+                        {currentTask.description.length > 120 && (
+                          <button
+                            onClick={() => setExpandedDescription(!expandedDescription)}
+                            className="text-blue-400 hover:underline ml-1"
+                          >
+                            {expandedDescription ? "Read Less" : "Read More"}
+                          </button>
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-300"><strong>Deadline:</strong> {currentTask.deadline}</p>
+                      <p className="text-sm text-gray-300"><strong>Started:</strong> {currentTask.time_started}</p>
+                      <p className="text-sm text-gray-300"><strong>Ended:</strong> {currentTask.time_ended}</p>
+
+                      <div className="mt-6 flex flex-wrap gap-4 justify-center">
+                        <button
+                          onClick={() => {
+                            editTask(currentTask);
+                            setShowTableModal(false); // Close the modal when the Edit button is clicked
+                          }}
+                          className="py-2 px-5 border-4 border-green-800 shadow-md bg-green-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => deleteTask(currentTask.id)}
+                          className="py-2 px-5 border-4 border-green-800 shadow-md bg-red-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
+                        >
+                          🗑️ Delete
+                        </button>
+                        <button
+                          onClick={() => archiveTask(currentTask.id)}
+                          className="py-2 px-5 border-4 border-green-800 shadow-md bg-blue-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
+                        >
+                          📦 Archive
+                        </button>
+                        <button
+                          onClick={() => toggleVisibility(currentTask.id)}
+                          disabled={loading}
+                          className={`py-2 px-5 border-4 border-green-800 shadow-md ${
+                            currentTask.visibility === "visible" ? "bg-green-600" : "bg-gray-500"
+                          } text-white transition-all duration-300 flex-shrink-0`}
+                        >
+                          {currentTask.visibility === "visible" ? "🔵 Visible" : "⚫ Invisible"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between mt-6">
                 <button
-                  onClick={() => editTask(currentTask)}
-                  className="py-2 px-5 border-4 border-green-800 shadow-md bg-green-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 0}
+                  className="py-3 px-6 bg-green-600 text-white rounded disabled:opacity-50"
                 >
-                  ✏️ Edit
+                  Previous
                 </button>
                 <button
-                  onClick={() => deleteTask(currentTask.id)}
-                  className="py-2 px-5 border-4 border-green-800 shadow-md bg-red-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className="py-3 px-6 bg-green-600 text-white rounded disabled:opacity-50"
                 >
-                  🗑️ Delete
-                </button>
-                <button
-                  onClick={() => archiveTask(currentTask.id)}
-                  className="py-2 px-5 border-4 border-green-800 shadow-md bg-blue-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
-                >
-                  📦 Archive
-                </button>
-                <button
-                  onClick={() => toggleVisibility(currentTask.id)}
-                  disabled={loading}
-                  className={`py-2 px-5 border-4 border-green-800 shadow-md ${
-                    currentTask.visibility === "visible" ? "bg-green-600" : "bg-gray-500"
-                  } text-white transition-all duration-300 flex-shrink-0`}
-                >
-                  {currentTask.visibility === "visible" ? "🔵 Visible" : "⚫ Invisible"}
+                  Next
                 </button>
               </div>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={handlePreviousPage}
-          disabled={currentPage === 0}
-          className="py-3 px-6 bg-green-600 text-white rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages - 1}
-          className="py-3 px-6 bg-green-600 text-white rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-  
         {showArchiveModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-gray-700 p-8 rounded-lg shadow-lg text-white h-auto ">
@@ -289,5 +292,4 @@ export default function Dashboard() {
       </div>
     </>
   );
-  
 }

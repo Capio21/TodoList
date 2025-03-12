@@ -142,52 +142,56 @@ export default function UsersTable() {
           ) : error ? (
             <p className="text-center text-red-500 text-lg">{error}</p>
           ) : (
-            <div className="w-full max-w-8xl grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-9">
+            <>
+              {/* Display number of users */}
+              <p className="text-center text-gray-300 mb-6">Total Users: {users.length}</p>
   
-              {users.length > 0 ? (
-                users.map((user) => (
-                  <div
-                    className="relative w-full p-5 bg-gray-700 border border-green-600 rounded-xl shadow-lg"
-                    key={user.id}
-                  >
-                    {/* Profile Image */}
-                    <div className="flex flex-col items-center">
-                      <img
-                        src={user.profile_image ? `http://127.0.0.1:8000/${user.profile_image}` : "/default-profile.png"}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover border-4 border-green-500 shadow-lg"
-                      />
-                      <h3 className="mt-3 text-lg font-semibold text-white">{user.username}</h3>
-                    </div>
-  
-                    <p className="text-gray-300 text-center mt-2">📧 {user.email}</p>
-  
-                    {/* Action Button with Ellipsis */}
-                    <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}>
-                      <FiMoreVertical size={24} className="text-green-500" />
-                    </div>
-                    {menuOpen === user.id && (
-                      <div className="absolute top-10 right-4 bg-gray-600 shadow-md rounded-lg overflow-hidden w-32 z-10">
-                        <button
-                          onClick={() => handleEditUser (user)}
-                          className="block w-full px-4 py-2 text-left text-white hover:bg-gray-500"
-                        >
-                          📝 Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser (user.id)}
-                          className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-500"
-                        >
-                          ❌ Delete
-                        </button>
+              <div className="w-full max-w-8xl grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-9">
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <div
+                      className="relative w-full p-5 bg-gray-700 border border-green-600 rounded-xl shadow-lg"
+                      key={user.id}
+                    >
+                      {/* Profile Image */}
+                      <div className="flex flex-col items-center">
+                        <img
+                          src={user.profile_image ? `http://127.0.0.1:8000/${user.profile_image}` : "/default-profile.png"}
+                          alt="Profile"
+                          className="w-24 h-24 rounded-full object-cover border-4 border-green-500 shadow-lg"
+                        />
+                        <h3 className="mt-3 text-lg font-semibold text-white">{user.username}</h3>
                       </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-400 py-4 col-span-full">No users found.</div>
-              )}
-            </div>
+  
+                      <p className="text-gray-300 text-center mt-2">📧 {user.email}</p>
+  
+                      {/* Action Button with Ellipsis */}
+                      <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}>
+                        <FiMoreVertical size={24} className="text-green-500" />
+                      </div>
+                      {menuOpen === user.id && (
+                        <div className="absolute top-10 right-4 bg-gray-600 shadow-md rounded-lg overflow-hidden w-32 z-10">
+                          <button
+                            onClick={() => handleEditUser (user)}
+                            className="block w-full px-4 py-2 text-left text-white hover:bg-gray-500"
+                          >
+                            📝 Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser (user.id)}
+                            className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-500"
+                          >
+                            ❌ Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-4 col-span-full">No users found.</div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
