@@ -1,24 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
-import { Bell, LogOut, LayoutDashboard, List, UserPlus, Users } from "lucide-react";
+import {  LogOut, LayoutDashboard, List, UserPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const SidebarNavigation = () => {
   const [active, setActive] = useState("DashBoard");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
- 
   const router = useRouter();
-
-  // Placeholder profile image (Replace with dynamic source)
   const [profileImage, setProfileImage] = useState("/profile-placeholder.png");
 
   const menuItems = [
     { name: "DashBoard", icon: <LayoutDashboard size={24} />, path: "/DashBoard" },
-    { name: "UserList", icon: <Users size={24} />, path: "/Userlist" },
-    { name: "usertodo", icon: <List size={24} />, path: "/usertodo" },
+    { name: "User List", icon: <Users size={24} />, path: "/Userlist" },
+    { name: "Usertodo", icon: <List size={24} />, path: "/usertodo" },
     { name: "AdminReg", icon: <UserPlus size={24} />, path: "/Userlist/AdminReg" },
   ];
 
@@ -28,14 +25,14 @@ const SidebarNavigation = () => {
     try {
       const token = sessionStorage.getItem("authToken");
       if (!token) {
-        console.error("No token found, greenirecting to login.");
+        console.error("No token found, redirecting to login.");
         router.push("/login");
         return;
       }
       await axios.post(
         "http://127.0.0.1:8000/api/logout",
         {},
-        { headers: { Authorization: `Bearer ${token}` }, withCgreenentials: true }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       sessionStorage.removeItem("authToken");
       router.push("/login");
@@ -47,7 +44,6 @@ const SidebarNavigation = () => {
   return (
     <>
       <aside className="bg-gray-700 min-h-screen w-20 flex flex-col items-center py-4 justify-between">
-        {/* Menu Items */}
         <ul className="text-white space-y-6">
           {menuItems.map((item) => (
             <li key={item.name} className="group relative flex flex-col items-center">
@@ -66,11 +62,6 @@ const SidebarNavigation = () => {
               </span>
             </li>
           ))}
-
-          {/* Notification Bell */}
-          
-
-          {/* Logout Button */}
           <li
             className="group relative flex flex-col items-center cursor-pointer transition duration-200 p-4 rounded-md hover:bg-green-700"
             onClick={confirmLogout}
@@ -82,10 +73,6 @@ const SidebarNavigation = () => {
           </li>
         </ul>
 
-        {/* Profile Section */}
-       
-
-        {/* Logout Modal */}
         {showLogoutModal && (
           <div className="fixed z-50 inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
             <div className="bg-gray-800 p-6 rounded-md shadow-lg text-center">

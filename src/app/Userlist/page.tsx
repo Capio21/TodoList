@@ -6,6 +6,7 @@ import axios from "axios";
 import Head from "next/head";
 import Adminbar from "../Components/adminsidebar";
 import { FiMoreVertical } from "react-icons/fi";
+import authUser from "../utils/authUser";
 
 const EditModal = ({ isOpen, onClose, onUpdate, username, setUsername, email, setEmail }) => {
   if (!isOpen) return null;
@@ -41,7 +42,7 @@ const EditModal = ({ isOpen, onClose, onUpdate, username, setUsername, email, se
   );
 };
 
-export default function UsersTable() {
+const UsersTable = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -117,87 +118,81 @@ export default function UsersTable() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("authToken");
-    router.push("/login");
-  };
+  
 
   return (
     <>
-      <Head>
+    <Head>
         <title>Users List | Infi-Admin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-  
-      <div className="flex min-h-screen bg-gray-800 text-gray-100">
+    </Head>
+
+    <div className="flex min-h-screen bg-gray-800 text-gray-100">
         <Adminbar />
-  
+
         <div className="flex-1 flex flex-col items-center p-10">
-          <h2 className="text-3xl font-bold text-green-500 text-center mb-6 drop-shadow-lg">
-            User List
-          </h2>
-  
-          {loading ? (
-            <p className="text-center text-gray-300 text-lg">Loading users...</p>
-          ) : error ? (
-            <p className="text-center text-red-500 text-lg">{error}</p>
-          ) : (
-            <>
-              {/* Display number of users */}
-              <p className="text-center text-gray-300 mb-6">Total Users: {users.length}</p>
-  
-              <div className="w-full max-w-8xl grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-9">
-                {users.length > 0 ? (
-                  users.map((user) => (
-                    <div
-                      className="relative w-full p-5 bg-gray-700 border border-green-600 rounded-xl shadow-lg"
-                      key={user.id}
-                    >
-                      {/* Profile Image */}
-                      <div className="flex flex-col items-center">
-                        <img
-                          src={user.profile_image ? `http://127.0.0.1:8000/${user.profile_image}` : "/default-profile.png"}
-                          alt="Profile"
-                          className="w-24 h-24 rounded-full object-cover border-4 border-green-500 shadow-lg"
-                        />
-                        <h3 className="mt-3 text-lg font-semibold text-white">{user.username}</h3>
-                      </div>
-  
-                      <p className="text-gray-300 text-center mt-2">📧 {user.email}</p>
-  
-                      {/* Action Button with Ellipsis */}
-                      <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}>
-                        <FiMoreVertical size={24} className="text-green-500" />
-                      </div>
-                      {menuOpen === user.id && (
-                        <div className="absolute top-10 right-4 bg-gray-600 shadow-md rounded-lg overflow-hidden w-32 z-10">
-                          <button
-                            onClick={() => handleEditUser (user)}
-                            className="block w-full px-4 py-2 text-left text-white hover:bg-gray-500"
-                          >
-                            📝 Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser (user.id)}
-                            className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-500"
-                          >
-                            ❌ Delete
-                          </button>
-                        </div>
-                      )}
+            <h2 className="text-3xl font-bold text-green-500 text-center mb-6 drop-shadow-lg">
+                User List
+            </h2>
+
+            {loading ? (
+                <p className="text-center text-gray-300 text-lg">Loading users...</p>
+            ) : error ? (
+                <p className="text-center text-red-500 text-lg">{error}</p>
+            ) : (
+                <>
+                    {/* Display number of users */}
+                    <p className="text-center text-gray-300 mb-6">Total Users: {users.length}</p>
+
+                    <div className="w-full max-w-8xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {users.length > 0 ? (
+                            users.map((user) => (
+                                <div
+                                    className="relative p-5 bg-gray-700 border border-green-600 rounded-lg shadow-lg flex flex-col items-center"
+                                    key={user.id}
+                                >
+                                    {/* Profile Image */}
+                                    <img
+                                        src={user.profile_image ? `http://127.0.0.1:8000/${user.profile_image}` : "/default-profile.png"}
+                                        alt="Profile"
+                                        className="w-24 h-24 rounded-full object-cover border-4 border-green-500 shadow-lg mb-3"
+                                    />
+                                    <h3 className="text-lg font-semibold text-white">{user.username}</h3>
+                                    <p className="text-gray-300 text-center mt-2">📧 {user.email}</p>
+
+                                    {/* Action Button with Ellipsis */}
+                                    <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}>
+                                        <FiMoreVertical size={24} className="text-green-500" />
+                                    </div>
+                                    {menuOpen === user.id && (
+                                        <div className="absolute top-10 right-4 bg-gray-600 shadow-md rounded-lg overflow-hidden w-32 z-10">
+                                            <button
+                                                onClick={() => handleEditUser (user)}
+                                                className="block w-full px-4 py-2 text-left text-white hover:bg-gray-500"
+                                            >
+                                                📝 Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteUser (user.id)}
+                                                className="block w-full px-4 py-2 text-left text-red-500 hover:bg-gray-500"
+                                            >
+                                                ❌ Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center text-gray-400 py-4 col-span-full">No users found.</div>
+                        )}
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-400 py-4 col-span-full">No users found.</div>
-                )}
-              </div>
-            </>
-          )}
+                </>
+            )}
         </div>
-      </div>
-  
-      {/* Edit Modal */}
-      <EditModal
+    </div>
+
+    {/* Edit Modal */}
+    <EditModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onUpdate={handleUpdateUser }
@@ -205,7 +200,8 @@ export default function UsersTable() {
         setUsername={setEditUsername}
         email={editEmail}
         setEmail={setEditEmail}
-      />
-    </>
+    />
+</>
   );
 }
+export default authUser (UsersTable);

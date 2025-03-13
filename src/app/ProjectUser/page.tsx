@@ -6,8 +6,9 @@ import axios from "axios";
 import Sidebar from "../Components/Sidebar";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import authUser  from "../utils/authUser";
 
-export default function TodoPage() {
+const TodoPage = () => {
   const router = useRouter();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,17 +81,17 @@ export default function TodoPage() {
     }, 300); // Simulate animation delay
   }, [percentage]);
 
-
   const prevPage = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
     }
   };
+
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col items-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-gray-500 drop-shadow-lg">
+      <div className="flex-1 p-9 flex flex-col items-center">
+        <h1 className="text-2xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-gray-500 drop-shadow-lg">
           ADMIN TASK
         </h1>
         {loading ? (
@@ -105,94 +106,66 @@ export default function TodoPage() {
                   if (index !== currentPage) return null;
                   const previousTaskCompleted =
                     index === 0 || tasks[index - 1]?.status === "complete";
-  
+
                   return (
                     <div
                       key={task.id}
-                      className={`relative border-4 border-gray-700 bg-gray-800 p-4 md:p-6 shadow-lg transition-all w-full md:w-11/12 lg:w-3/4 rounded-lg flex flex-col items-center ${
-                        previousTaskCompleted ? "" : "opacity-50 blur-md"
-                      }`}
+                      className={`relative border-2 border-gray-700 bg-gray-800 p-4 shadow-lg transition-all w-full sm:w-9/10 lg:w-3/4 rounded-lg flex items-center space-x-6`}
                     >
-                      <div className="bg-green-600 border-b-4 border-gray-700 p-4 font-bold text-white text-center w-full">
-                        <h3 className="text-lg font-bold">{task.title}</h3>
+                      {/* Left Side - Progress Bar */}
+                      <div className="w-40 flex justify-center items-center">
+                        <CircularProgressbar
+                          value={percentage}
+                          text={`${Math.round(percentage)}%`}
+                          styles={buildStyles({
+                            pathColor: `rgba(62, 152, 199, ${percentage / 100})`,
+                            textColor: '#fff',
+                            trailColor: '#d6d6d6',
+                          })}
+                        />
                       </div>
-                      <div className="p-4 text-white text-lg text-center flex flex-col items-center space-y-3">
-                        <p className="text-sm">{task.description}</p>
-                        <div className="text-xs text-gray-300 space-y-2">
-                          <div className="flex flex-col items-center justify-center h-auto bg-gray-800 text-[#ccc] font-sans">
-                            <style>{`
-                              @import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
-  
-                              *, *:before, *:after { box-sizing: border-box; }
-  
-                              .range {
-                                position: relative;
-                                background-color: #2A2A2A;
-                                width: 100%;
-                                height: 25px;
-                                transform: skew(30deg);
-                                font-family: 'Orbitron', monospace;
-                                overflow: hidden;
-                                border: 2px solid #32CD32;
-                                box-shadow: 0px 0px 10px rgba(50, 205, 50, 0.8);
-                              }
-  
-                              .range::before {
-                                content: '';
-                                position: absolute;
-                                top: 0;
-                                left: 0;
-                                width: ${progress}%;
-                                height: 100%;
-                                background-color: #32CD32;
-                                z-index: 0;
-                                transition: width 1s ease-in-out;
-                                animation: glow 1.5s infinite alternate;
-                              }
-  
-                              .range::after {
-                                content: '${progress}%';
-                                color: #fff;
-                                position: absolute;
-                                left: 5%;
-                                top: 50%;
-                                transform: translateY(-50%) skewX(-30deg);
-                                font-weight: bold;
-                                font-size: 16px;
-                                text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-                                z-index: 1;
-                              }
-  
-                              @keyframes glow {
-                                0% { box-shadow: 0px 0px 10px rgba(50, 205, 50, 0.5); }
-                                50% { box-shadow: 0px 0px 20px rgba(50, 205, 50, 1); }
-                                100% { box-shadow: 0px 0px 10px rgba(50, 205, 50, 0.5); }
-                              }
-                            `}</style>
-                            <div className="range"></div>
-                          </div>
-                          <p>
-                            <strong>Deadline :</strong> {new Date(task.deadline).toLocaleString()}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => markAsDone(task.id)}
-                          disabled={!previousTaskCompleted || task.status === "complete"}
-                          className={`w-full py-2 border-4 border-gray-700 shadow-md font-bold transition-all cursor-pointer mt-4 ${
-                            task.status === "complete"
-                              ? "bg-green-500"
-                              : previousTaskCompleted
-                              ? "bg-green-600 hover:bg-green-500"
-                              : "bg-gray-600 cursor-not-allowed"
-                          }`}
-                        >
-                          {task.status === "complete" ? "Completed" : "Mark as Done"}
-                        </button>
-                      </div>
+
+                      {/* Right Side - Task Details */}
+          <div className="relative flex-1 flex flex-col items-center text-white">
+            {/* Task Title */}
+            <div className="bg-green-600 border-b-2 border-gray-700 p-2 font-bold text-center w-full">
+              <h3 className="text-lg font-bold">{task.title}</h3>
+            </div>
+
+            {/* Tags Pinned in Corner */}
+            {task.tags && (
+              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg">
+                {Array.isArray(task.tags) ? task.tags.join(', ') : task.tags}
+              </div>
+            )}
+
+            {/* Task Details */}
+            <div className="p-2 text-sm text-center space-y-2">
+              <p className="text-xs">{task.description}</p>
+              <p>
+                <strong>Deadline:</strong> {new Date(task.deadline).toLocaleString()}
+              </p>
+
+           {/* Mark as Done Button */}
+<button
+  onClick={() => markAsDone(task.id)}
+  disabled={task.status === "complete"}
+  className={`w-full py-2 border-2 border-gray-700 shadow-md font-bold transition-all cursor-pointer mt-2 ${
+    task.status === "complete"
+      ? "bg-green-500 cursor-not-allowed"
+      : "bg-green-600 hover:bg-green-500"
+  }`}
+>
+  {task.status === "complete" ? "Completed" : "Mark as Done"}
+</button>
+
+            </div>
+          </div>
+
                     </div>
                   );
                 })}
-                <div className="flex justify-between mt-6 w-full max-w-md">
+                <div className="flex justify-between mt-4 w-full max-w-md">
                   <button
                     onClick={prevPage}
                     disabled={currentPage === 0}
@@ -216,6 +189,6 @@ export default function TodoPage() {
       </div>
     </div>
   );
-}
+};
 
-
+export default authUser (TodoPage);

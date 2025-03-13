@@ -17,11 +17,12 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from "recharts";
-import "react-datepicker/dist/react-datepicker.css";
+
+import authUser from "../utils/authUser";
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
-const TaskList = ({ tasks }) => {
+const TaskList = ({ tasks = {} }) => {
   return (
     <div className="bg-gray-800 p-4 rounded-xl shadow-lg w-full ">
       <h2 className="text-lg font-semibold text-center mb-2 text-green-300">Tasks</h2>
@@ -49,16 +50,14 @@ const TaskList = ({ tasks }) => {
   );
 };
 
-export default function Dashboard() {
+const Dashboard = () => {
   const [taskCount, setTaskCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
-  const [archivedCount, setArchivedCount] = useState(0);
   const [userCount, setUserCount] = useState(0);
   const [taskData, setTaskData] = useState([]);
   const [userData, setUserData] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [taskCountsByDate, setTaskCountsByDate] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,15 +68,6 @@ export default function Dashboard() {
         setTaskCount(tasks.length);
         setPendingCount(tasks.filter((task) => task.status === "pending").length);
         setCompletedCount(tasks.filter((task) => task.status === "complete").length);
-        setArchivedCount(tasks.filter((task) => task.archive === true).length);
-
-        const groupedTasks = tasks.reduce((acc, task) => {
-          const date = new Date(task.date).toLocaleDateString();
-          acc[date] = (acc[date] || 0) + 1;
-          return acc;
-        }, {});
-
-        setTaskCountsByDate(groupedTasks);
 
         const usersRes = await axios.get(`${API_BASE_URL}/users`);
         const users = usersRes.data;
@@ -172,27 +162,28 @@ export default function Dashboard() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-
-        
           </div>
 
           {/* Task List Component */}
           <TaskList tasks={taskData} />
         </div>
+
         <div className="bg-gray-800 p-4 rounded-xl shadow-lg w-full mt-6">
-              <h2 className="text-lg font-semibold text-center mb-2 text-green-300">Users per Date</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={userData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <RechartsTooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="users" stroke="#00C49F" activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <h2 className="text-lg font-semibold text-center mb-2 text-green-300">Users per Date</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={userData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <RechartsTooltip />
+              <Legend />
+              <Line type="monotone" dataKey="users" stroke="#00C49F" activeDot={{ r: 8 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </main>
     </div>
   );
 }
+
+export default authUser(Dashboard);

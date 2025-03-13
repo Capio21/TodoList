@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from "next/navigation";
 import Sidebar from "../Components/Sidebar";
+import authUser from "../utils/authUser";
 
 interface Activity {
   id: number;
@@ -47,8 +48,7 @@ const ProgressBar = ({ percentage }: { percentage: number }) => {
   
   );
 };
-
-export default function ActivityPage() {
+const ActivityPage = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [formData, setFormData] = useState<Partial<Activity>>({ 
     title: "", 
@@ -262,8 +262,7 @@ export default function ActivityPage() {
   const completedActivities = activities.filter(activity => activity.status === 'complete').length;
   const totalActivities = activities.length;
   const completionPercentage = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
-
-  return (
+return (
   <>
     <div className="flex min-h-screen bg-gray-900 text-white items-center justify-center p-2">
       <Sidebar />
@@ -271,21 +270,22 @@ export default function ActivityPage() {
         <div className="p-4 border border-green-700 w-full max-w-4xl bg-gray-900 rounded-lg shadow-lg">
           <button
             onClick={() => setIsOpen(true)}
-            className="inline-flex items-center gap-1 px-3 py-1 text-sm font-bold text-black bg-green-500 border-2 border-black rounded-full shadow-lg transition-all duration-300 ease-in-out cursor-pointer hover:bg-gray-900 hover:text-green-500 hover:border-green-500 hover:shadow-green-700 active:bg-green-300 active:shadow-none active:translate-y-1"
+            className="inline-flex items-center gap-1 px-3 py-1 text-lg font-bold text-black bg-green-500 border-2 border-black rounded-full shadow-lg transition-all duration-300 ease-in-out cursor-pointer hover:bg-gray-900 hover:text-green-500 hover:border-green-500 hover:shadow-green-700 active:bg-green-300 active:shadow-none active:translate-y-1"
           >
             ➕ 
           </button>
 
           <div className="mt-4">
-            <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
-              My Personal Task
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
+              Personal Task
             </h1>
+            <br />
             <ProgressBar percentage={completionPercentage} />
             <br />
 
             <select 
               onChange={(e) => setSelectedStatus(e.target.value)} 
-              className="w-full p-2 border-4 border-green-700 bg-gray-900 text-green-500 font-bold mb-4 rounded-lg shadow-lg focus:outline-none focus:border-green-500 hover:bg-gray-900 transition-all"
+              className="w-full p-3 border-4 border-green-700 bg-gray-900 text-green-500 font-bold mb-4 rounded-lg shadow-lg focus:outline-none focus:border-green-500 hover:bg-gray-900 transition-all"
             >
               <option value="pending" className="bg-gray-900 text-white">Pending</option>
               <option value="complete" className="bg-gray-900 text-white">Complete</option>
@@ -294,129 +294,181 @@ export default function ActivityPage() {
             </select>
 
             <div className="flex justify-center">
-              <div className="grid grid-cols-1 gap-4 w-full">
-                {currentActivities.length > 0 && (
-                  <div 
-                    key={currentActivities[0].id} 
-                    className={`p-4 border border-green-700 bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center`}
-                  >
-                    <h3 className="text-lg md:text-xl font-bold mb-2">{currentActivities[0].title}</h3>
-                    <h3 className="text-lg md:text-xl font-bold mb-2">{currentActivities[0].description}</h3>
-                    <p className="mb-2 text-gray-400">Due: {currentActivities[0].due_date}</p>
-                    <p className="mb-2 text-gray-400">Tags: {currentActivities[0].tags}</p>
-                    <p className="mb-2 text-gray-400">Status: {currentActivities[0].status}</p>
-                    <p className="mb-2 text-gray-400">Collaborators: {currentActivities[0].collaborator_name}</p>
-                    <div className="flex flex-row justify-center gap-2">
-                      <button 
-                        onClick={() => handleEdit(currentActivities[0])}
-                        className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                      >
-                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
-                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                        <span className="relative block px-3 py-1 rounded-full text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Edit</span>
-                      </button>
-                      
-                      {currentActivities[0].status === 'pending' && !currentActivities[0].archive && (
-                        <button 
-                          onClick={() => handleMarkAsDone(currentActivities[0].id)}
-                          className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                        >
-                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
-                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                          <span className="relative block px-3 py-1 rounded-full text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Mark as Done</span>
-                        </button>
-                      )}
-                      
-                      {currentActivities[0].archive ? (
-                        <button 
-                          onClick={() => handleRestore(currentActivities[0].id)}
-                          className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                        >
-                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
-                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
-                          <span className="relative block px-3 py-1 rounded-full text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Restore</span>
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleArchive(currentActivities[0].id)}
-                          className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                        >
-                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
-                          <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-yellow-900 via-yellow-700 to-yellow-900"></span>
-                          <span className="relative block px-3 py-1 rounded-full text-white bg-yellow-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Archive</span>
-                        </button>
-                      )}
-                      
-                      <button 
-                        onClick={() => handleDelete(currentActivities[0].id)}
-                        className="relative border-none bg-transparent p-0 cursor-pointer outline-offset-4 transition filter duration-250"
-                      >
-                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-black opacity-25 transform translate-y-1 transition-transform duration-600 ease-out"></span>
-                        <span className="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-l from-green-900 via-green-700 to-green-900"></span>
-                        <span className="relative block px-3 py-1 rounded-full text-white bg-green-600 transform -translate-y-1 transition-transform duration-600 ease-out text-xs">Delete</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+  <div className="grid grid-cols-1 gap-4 w-full">
+    {currentActivities.length > 0 && (
+      <div 
+        key={currentActivities[0].id} 
+        className="p-6 border border-green-700 bg-gray-900 text-white rounded-lg shadow-lg flex flex-col items-center text-center"
+      >
+        <h3 className="text-2xl md:text-3xl font-bold mb-2">{currentActivities[0].title}</h3>
+        <h3 className="text-xl md:text-2xl font-bold mb-2">{currentActivities[0].description}</h3>
+        <p className="mb-2 text-gray-400 text-lg font-semibold">Due: {currentActivities[0].due_date}</p>
+        <p className="mb-2 text-gray-400 text-lg font-semibold">Tags: {currentActivities[0].tags}</p>
+        <p className="mb-2 text-gray-400 text-lg font-semibold">Status: {currentActivities[0].status}</p>
+        <p className="mb-4 text-gray-400 text-lg font-semibold">Collaborators: {currentActivities[0].collaborator_name}</p>
+
+        <div className="flex flex-row justify-center gap-3">
+          <button 
+            onClick={() => handleEdit(currentActivities[0])}
+            className="relative px-6 py-3 text-lg font-bold rounded-full text-white bg-green-600 transition transform hover:scale-105"
+          >
+            Edit
+          </button>
+
+          {currentActivities[0].status === 'pending' && !currentActivities[0].archive && (
+            <button 
+              onClick={() => handleMarkAsDone(currentActivities[0].id)}
+              className="relative px-6 py-3 text-lg font-bold rounded-full text-white bg-blue-600 transition transform hover:scale-105"
+            >
+              Mark as Done
+            </button>
+          )}
+
+          {currentActivities[0].archive ? (
+            <button 
+              onClick={() => handleRestore(currentActivities[0].id)}
+              className="relative px-6 py-3 text-lg font-bold rounded-full text-white bg-yellow-600 transition transform hover:scale-105"
+            >
+              Restore
+            </button>
+          ) : (
+            <button 
+              onClick={() => handleArchive(currentActivities[0].id)}
+              className="relative px-6 py-3 text-lg font-bold rounded-full text-white bg-yellow-600 transition transform hover:scale-105"
+            >
+              Archive
+            </button>
+          )}
+
+          <button 
+            onClick={() => handleDelete(currentActivities[0].id)}
+            className="relative px-6 py-3 text-lg font-bold rounded-full text-white bg-red-600 transition transform hover:scale-105"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
 
             {/* Pagination Controls */}
             <div className="flex justify-between mt-4">
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
                 disabled={currentPage === 1} 
-                className="bg-gray-600 p-2 rounded text-white text-xs"
+                className="bg-gray-600 p-2 rounded text-white text-xs font-bold"
               >
                 -
               </button>
-              <span className="self-center text-white text-xs">Page {currentPage} of {totalPages}</span>
+              <span className="self-center text-white text-xs font-bold">Page {currentPage} of {totalPages}</span>
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
                 disabled={currentPage === totalPages} 
-                className="bg-gray-600 p-2 rounded text-white text-xs transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
+                className="bg-gray-600 p-2 rounded text-white text-xs font-bold transform transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg"
               >
-                -
+                +
               </button>
             </div>
           </div>
           {isOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-              <div className="bg-green-900 p-6 rounded-lg shadow-lg w-full max-w-md relative">
-                <button onClick={() => resetForm()} className="absolute top-2 right-2 text-white font-bold text-xl">×</button>
-                <h2 className="text-lg font-bold mb-4">{editId ? "Edit" : "Add"} Activity</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
-                  <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md"></textarea>
-                  <input type="date" name="date_started" value={formData.date_started} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
-                  <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" required />
-                  <input type="text" name="tags" placeholder="Tags" value={formData.tags} onChange={handleChange} className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md" />
-                  
-                  <select
-                    name="collaborators"
-                    multiple
-                    value={formData.collaborators || []}
-                    onChange={(e) => {
-                      const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
-                      setFormData({ ...formData, collaborators: selectedOptions });
-                    }}
-                    className="w-full border-4 border-black p-2 bg-gray-200 text-black rounded shadow-md"
-                  >
-                    {users.map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.username}
-                      </option>
-                    ))}
-                  </select>
-               
-                  <button type="submit" className="w-full bg-blue-800 border-4 border-black shadow-md p-2 font-bold cursor-pointer hover:bg-blue-900">{editId ? "Update" : "Add"} Activity</button>
-                </form>
-              </div>
-            </div>
-          )}
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+    <div className="bg-green-900 p-6 rounded-lg shadow-lg w-full max-w-md relative flex flex-col items-center">
+      <button 
+        onClick={() => resetForm()} 
+        className="absolute top-2 right-2 text-white font-bold text-xl"
+      >
+        ×
+      </button>
+      <h2 className="text-xl font-bold mb-4 text-center">
+        {editId ? "Edit" : "Add"} Activity
+      </h2>
+      <form 
+        onSubmit={handleSubmit} 
+        className="w-full flex flex-col items-center gap-4"
+      >
+        <input 
+          type="text" 
+          name="title" 
+          placeholder="Title" 
+          value={formData.title} 
+          onChange={handleChange} 
+          className="border-4 border-black p-2 bg-gray-200 text-black text-lg font-bold rounded shadow-md w-full" 
+          required 
+        />
+        <textarea 
+          name="description" 
+          placeholder="Description" 
+          value={formData.description} 
+          onChange={handleChange} 
+          className="border-4 border-black p-2 bg-gray-200 text-black text-lg font-bold rounded shadow-md w-full"
+        ></textarea>
+        <input 
+          type="date" 
+          name="date_started" 
+          value={formData.date_started} 
+          onChange={handleChange} 
+          className="border-4 border-black p-2 bg-gray-200 text-black text-lg font-bold rounded shadow-md w-full" 
+          required 
+        />
+        <input 
+          type="datetime-local" 
+          name="due_date" 
+          value={formData.due_date} 
+          onChange={handleChange} 
+          className="border-4 border-black p-2 bg-gray-200 text-black text-lg font-bold rounded shadow-md w-full" 
+          required 
+        />
+        <input 
+          type="text" 
+          name="tags" 
+          placeholder="Tags" 
+          value={formData.tags} 
+          onChange={handleChange} 
+          className="border-4 border-black p-2 bg-gray-200 text-black text-lg font-bold rounded shadow-md w-full" 
+        />
+        
+        <div className="flex flex-col items-center w-full">
+          <h1 className="text-1xl md:text-2xl text-center text-black drop-shadow-lg">
+            Collaborators
+          </h1>
+          <br />
+          <select
+            name="collaborators"
+            multiple
+            value={formData.collaborators || []}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+              setFormData({ ...formData, collaborators: selectedOptions });
+            }}
+            className="border-4 border-black p-2 bg-gray-200 text-black text-lg font-bold rounded shadow-md w-full"
+          >
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.username}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button 
+          type="submit" 
+          className="bg-blue-800 border-4 border-black shadow-md p-2 text-lg font-bold cursor-pointer hover:bg-blue-900 w-full"
+        >
+          {editId ? "Update" : "Add"} Activity
+        </button>
+      </form>
+    </div>
+  </div>
+)}
+
+
         </div>
       </div>
     </div>
   </>
 );
 }
+
+export default authUser (ActivityPage);

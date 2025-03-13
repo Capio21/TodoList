@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Head from "next/head";
 import Adminbar from "@/app/Components/adminsidebar";
+import authUser from "@/app/utils/authUser";
 
 interface AdminUser {
   id: number;
@@ -13,7 +14,7 @@ interface AdminUser {
   profile_image?: string;
 }
 
-export default function Dashboard() {
+const Dashboard = () => {
   const [userStats, setUserStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -114,6 +115,9 @@ export default function Dashboard() {
 
   return (
     <>
+
+
+    
       <Head>
         <title>Dashboard | Admin Panel</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -199,42 +203,40 @@ export default function Dashboard() {
             </div>
           )}
 
-          <h3 className="mt-8 text-xl font-semibold">Admin List</h3>
-          <div className="grid grid-cols-2 gap-6 mt-6">
+<div className="container mx-auto mt-8">
+        <h3 className="text-xl font-semibold">Admin List</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {admins.map((admin) => (
-              <div
-                key={admin.id}
-                className="p-9 border border-green-700 rounded-lg bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300"
-              >
-                <h4 className="text-2xl font-bold text-center text-white">{admin.username}</h4>
-                {admin.profile_image ? (
-                  <div className="flex justify-center mt-4">
-                    <img
-                      src={`http://127.0.0.1:8000/${admin.profile_image}`}
-                      alt="Profile"
-                      className="w-32 h-32 rounded-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex justify-center mt-4">
-                    <div className="w-32 h-32 bg-gray-600 rounded-full flex items-center justify-center">
-                      <p className="text-gray-300">No Image</p>
-                    </div>
-                  </div>
-                )}
-                <p className="mt-4 text-center text-gray-400">{admin.email}</p>
-                <button
-                  onClick={() => {
-                    setAdminToDelete(admin.id);
-                    setConfirmDeleteModal(true);
-                  }}
-                  className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded"
+                <div
+                    key={admin.id}
+                    className="p-4 border border-green-700 bg-gray-800 rounded-lg shadow-lg flex flex-col items-center"
                 >
-                  Delete Admin
-                </button>
-              </div>
+                    {admin.profile_image ? (
+                        <img
+                            src={`http://127.0.0.1:8000/${admin.profile_image}`}
+                            alt="Profile"
+                            className="w-24 h-24 rounded-full object-cover mb-4"
+                        />
+                    ) : (
+                        <div className="w-24 h-24 bg-gray-600 rounded-full flex items-center justify-center mb-4">
+                            <p className="text-gray-300">No Image</p>
+                        </div>
+                    )}
+                    <h4 className="text-lg font-bold text-center text-white">{admin.username}</h4>
+                    <p className="mt-2 text-center text-gray-400">{admin.email}</p>
+                    <button
+                        onClick={() => {
+                            setAdminToDelete(admin.id);
+                            setConfirmDeleteModal(true);
+                        }}
+                        className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded"
+                    >
+                        Delete Admin
+                    </button>
+                </div>
             ))}
-          </div>
+        </div>
+    </div>
 
           {/* Confirmation Modal for Deletion */}
           {confirmDeleteModal && (
@@ -261,5 +263,9 @@ export default function Dashboard() {
         </div>
       </div>
     </>
+
+
+
   );
 }
+export default authUser(Dashboard);

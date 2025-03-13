@@ -96,78 +96,87 @@ const TaskForm: React.FC<{
     setEditingTask(null);
     reset();
   };
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="p-6 bg-gray-900 rounded-lg shadow-lg max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="p-8 bg-gray-800 rounded-lg shadow-lg max-w-4xl mx-auto">
+      <h2 className="text-2xl text-white mb-6 text-center font-bold">Task Management Form</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="relative">
-          <label htmlFor="user_id" className="block text-gray-300 mb-2">User</label>
-          <select id="user_id" {...register("user_id", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300">
+          <label htmlFor="user_id" className="block text-gray-200 text-lg mb-2 font-bold">User  </label>
+          <select id="user_id" {...register("user_id", { required: true })} className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold">
             <option value="">Select User</option>
             {users.map((user) => (
-              <option key={user.id} value={user.id}>{user.username}</option>
+              <option key={user.id} value={user.id} className="font-bold">{user.username}</option>
             ))}
           </select>
         </div>
-
+  
         <div className="relative">
-          <label htmlFor="title" className="block text-gray-300 mb-2">Title</label>
-          <input id="title" type="text" {...register("title", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
+          <label htmlFor="title" className="block text-gray-200 text-lg mb-2 font-bold">Title</label>
+          <input id="title" type="text" {...register("title", { required: true })} className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold" />
         </div>
-
+  
         <div className="relative">
-          <label htmlFor="time_started" className="block text-gray-300 mb-2">Time Started</label>
-          <input id="time_started" type="datetime-local" {...register("time_started", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
+          <label htmlFor="time_started" className="block text-gray-200 text-lg mb-2 font-bold">Time Started</label>
+          <input id="time_started" type="datetime-local" {...register("time_started", { required: true })} className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold" />
         </div>
-
+  
         <div className="relative">
-          <label htmlFor="time_ended" className="block text-gray-300 mb-2">Time Ended</label>
-          <input id="time_ended" type="datetime-local" {...register("time_ended", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
+          <label htmlFor="time_ended" className="block text-gray-200 text-lg mb-2 font-bold">Time Ended</label>
+          <input id="time_ended" type="datetime-local" {...register("time_ended", { required: true })} className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold" />
         </div>
-
+  
         <div className="relative">
-          <label htmlFor="deadline" className="block text-gray-300 mb-2">Deadline</label>
-          <input id="deadline" type="datetime-local" {...register("deadline", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
+          <label htmlFor="deadline" className="block text-gray-200 text-lg mb-2 font-bold">Deadline</label>
+          <input id="deadline" type="datetime-local" {...register("deadline", { required: true })} className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold" />
         </div>
-
+  
         <div className="relative">
-          <label htmlFor="status" className="block text-gray-300 mb-2">Status</label>
-          <select id="status" {...register("status", { required: true })} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300">
+          <label htmlFor="status" className="block text-gray-200 text-lg mb-2 font-bold">Status</label>
+          <select id="status" {...register("status", { required: true })} className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold">
             <option value="pending">Pending</option>
             <option value="canceled">Canceled</option>
             <option value="complete">Complete</option>
             <option value="overdue">Overdue</option>
           </select>
         </div>
-
+  
         <div className="relative">
-          <label htmlFor="tags" className="block text-gray-300 mb-2">Tags</label>
-          <input id="tags" type="text" {...register("tags")} className="text-gray-900 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300" />
+          <label htmlFor="tags" className="block text-gray-200 text-lg mb-2 font-bold">Tags</label>
+          <select 
+            id="tags" 
+            {...register("tags")} 
+            className="text-green-100 p-3 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold"
+          >
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
         </div>
       </div>
-
+  
       <div className="relative mt-6">
-        <label htmlFor="description" className="block text-gray-300 mb-2">Description</label>
-        <textarea id="description" {...register("description", { required: true })} className="text-gray-900 p-4 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300"></textarea>
+        <label htmlFor="description" className="block text-gray-200 text-lg mb-2 font-bold">Description</label>
+        <textarea id="description" {...register("description", { required: true })} className="text-green-100 p-4 w-full bg-gray-700 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300 text-lg font-bold"></textarea>
       </div>
-
+  
       <div className="flex gap-6 mt-6 justify-between flex-wrap">
         <button
           type="submit"
-          className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md shadow-md transition duration-300 transform hover:scale-105"
+          className="bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-md shadow-md transition duration-300 transform hover:scale-105 text-lg font-bold"
           disabled={loading}
         >
           {loading ? "Saving..." : editingTask ? "Update Task" : "Submit"}
         </button>
-
+  
         {editingTask && (
-          <button type="button" onClick={cancelEdit} className="bg-gray-600 hover:bg-gray-500 text-white py-2 px-6 rounded-md shadow-md transition duration-300 transform hover:scale-105">
+          <button type="button" onClick={cancelEdit} className="bg-gray-600 hover:bg-gray-500 text-white py-3 px-6 rounded-md shadow-md transition duration-300 transform hover:scale-105 text-lg font-bold">
             Cancel Edit
           </button>
         )}
       </div>
     </form>
   );
+  
 };
 
 export default TaskForm;

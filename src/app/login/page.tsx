@@ -20,6 +20,13 @@ export default function Login() {
     setLoading(true);
     setMessage("");
 
+    // Basic input validation
+    if (!username || !password) {
+      setMessage("Username and password are required.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/api/login",
@@ -34,7 +41,12 @@ export default function Login() {
         setMessage("Invalid credentials. Please try again.");
       }
     } catch (error: any) {
-      setMessage(error.response?.data?.message || "Login failed. Please check your credentials.");
+      // Handle specific error messages
+      if (error.response?.status === 401) {
+        setMessage("Invalid credentials. Please check your username and password.");
+      } else {
+        setMessage("Login failed. Please try again later.");
+      }
     }
 
     setLoading(false);
@@ -58,46 +70,52 @@ export default function Login() {
         />
   
         {/* Login Box */}
-        <div className="relative bg-gray-900/80 backdrop-blur-md p-8 rounded-lg shadow-lg w-96 border border-green-600">
-          <h2 className="text-3xl font-bold text-white text-center mb-6">Infini-Sign In</h2>
+        <div className="relative max-w-4xl p-8 mx-auto bg-gray-800 rounded-md shadow-md mt-20">
+          <div className="flex items-center justify-center mb-6">
+            <Image src="/" alt="Logo" width={100} height={100} className="mr-4" />
+            <h2 className="text-3xl font-bold text-white">Infini-Sign In</h2>
+          </div>
   
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label className="block text-gray-300 text-lg font-medium mb-2">Username</label>
+              <label className="block text-white text-lg font-medium mb-2" htmlFor="username">Username</label>
               <input
+                id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-green-500"
+                className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:ring"
                 placeholder="Enter your username"
                 required
               />
             </div>
   
-            {/* Password Field with Toggle */}
-            <div className="relative">
-              <label className="block text-gray-300 text-lg font-medium mb-2">Password</label>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-green-500 pr-12"
-                placeholder="Enter your password"
-                required
-              />
-              <button
-                type="button"
-                className="absolute right-4 top-11 text-gray-400 hover:text-white"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOffIcon size={22} /> : <EyeIcon size={22} />}
-              </button>
+            <div>
+              <label className="block text-white text-lg font-medium mb-2" htmlFor="password">Password</label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:ring pr-12"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-white"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOffIcon size={22} /> : <EyeIcon size={22} />}
+                </button>
+              </div>
             </div>
   
-            {message && <p className="text-red-500 text-lg mt-2 text-center">{message}</p>}
+            {message && <p className="text-red-500 text-lg mt-2 text-center col-span-2">{message}</p>}
   
             {/* Buttons */}
-            <div className="flex flex-col items-center space-y-3">
+            <div className="flex flex-col items-center space-y-3 col-span-2">
               <button
                 type="submit"
                 className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg text-lg transition font-semibold"
@@ -116,12 +134,11 @@ export default function Login() {
             </div>
           </form>
   
-          <p className="text-lg text-center text-gray-400 mt-4">
+          <p className="text-lg text-center text-gray-400 mt-4 col-span-2">
             New here? <a href="/Signup" className="text-green-400 hover:underline">Create an account</a>
           </p>
         </div>
       </div>
     </>
   );
-  
 }

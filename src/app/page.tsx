@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import authUser from "./utils/authUser";
 
-export default function Home() {
+const Home = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -154,3 +155,4 @@ export default function Home() {
     </div>
   );
 }
+export default authUser(Home);

@@ -12,6 +12,8 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import authUser from "../utils/authUser";
+
 
 interface Activity {
   id: number;
@@ -20,9 +22,7 @@ interface Activity {
   date_started: string;
 }
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
-
-export default function ActivityPage() {
+const TodoList = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [currentTime, setCurrentTime] = useState<string>(
     new Date().toLocaleTimeString()
@@ -30,6 +30,7 @@ export default function ActivityPage() {
   const [currentDate, setCurrentDate] = useState<string>(
     new Date().toLocaleDateString()
   );
+  const API_BASE_URL = "http://127.0.0.1:8000/api";
 
   useEffect(() => {
     fetchActivities();
@@ -159,3 +160,5 @@ export default function ActivityPage() {
     </div>
   );
 }
+
+export default authUser(TodoList);
