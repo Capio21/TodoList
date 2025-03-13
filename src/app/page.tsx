@@ -49,7 +49,7 @@ const Home = () => {
     let days = [];
 
     days.push(
-      <div key="header" className="text-center text-xl font-bold mb-4">
+      <div key="header" className="text-center text-lg sm:text-xl font-bold mb-4">
         {monthNames[selectedDate.getMonth()]} {selectedDate.getFullYear()}
       </div>
     );
@@ -97,60 +97,54 @@ const Home = () => {
         className="absolute top-0 left-0 w-full h-full opacity-20"
       />
 
-      <header className="w-full p-8 flex justify-between items-center border-b border-gray-600 relative z-10 text-xl">
+      <header className="w-full p-4 sm:p-8 flex flex-col sm:flex-row justify-between items-center border-b border-gray-600 relative z-10 text-lg sm:text-xl">
         <div className="flex items-center">
-          <Image src="/next.svg" alt="Next.js Logo" width={50} height={50} className="mr-4" />
-          <span className="text-3xl font-bold text-green-600">InfiniTask</span>
+          <Image src="/next.svg" alt="Next.js Logo" width={40} height={40} className="mr-2 sm:mr-4" />
+          <span className="text-2xl sm:text-3xl font-bold text-green-600">InfiniTask</span>
         </div>
 
-        <nav className="flex items-center">
+        <nav className="flex flex-col sm:flex-row items-center mt-4 sm:mt-0">
           <div className="inline-flex rounded-md shadow-xs" role="group">
-            {/* My Tasks Button */}
-            <a href="/login" className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-green-600 rounded-s-lg hover:bg-green-600 focus:z-10 focus:ring-2 focus:ring-green-500">
+            <a href="/login" className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gray-800 border border-green-600 rounded-tl-lg sm:rounded-l-lg hover:bg-green-600 focus:z-10 focus:ring-2 focus:ring-green-500">
               My Tasks
             </a>
-
-            {/* Login Button */}
-            <a href="/login" className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-green-600 hover:bg-green-600 focus:z-10 focus:ring-2 focus:ring-green-500">
+            <a href="/login" className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gray-800 border border-green-600 hover:bg-green-600 focus:z-10 focus:ring-2 focus:ring-green-500">
               Login
             </a>
-
-            {/* Sign Up Button */}
-            <a href="/Signup" className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-green-600 rounded-e-lg hover:bg-green-600 focus:z-10 focus:ring-2 focus:ring-green-500">
+            <a href="/Signup" className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gray-800 border border-green-600 rounded-tr-lg sm:rounded-r-lg hover:bg-green-600 focus:z-10 focus:ring-2 focus:ring-green-500">
               Sign Up
             </a>
           </div>
         </nav>
       </header>
 
-      <main className="flex flex-col items-center justify-center w-full max-w-7xl px-6 py-16 mx-auto text-center">
-  <div className="w-full max-w-4xl">
-    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-green-600 mb-8 leading-tight">
-      Cramming? Organize Your Tasks, Achieve Your Goals
-    </h1>
-    <p className="text-gray-300 text-lg sm:text-xl md:text-2xl mb-10">
-      InfiniTask is your all-in-one task management solution, designed to streamline your workflow and boost productivity.
-    </p>
-  </div>
+      <main className="flex flex-col items-center justify-center w-full max-w-7xl px-4 sm:px-6 py-8 sm:py-16 mx-auto text-center">
+        <div className="w-full max-w-4xl">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-green-600 mb-6 leading-tight">
+            Cramming? Organize Your Tasks, Achieve Your Goals
+          </h1>
+          <p className="text-gray-300 text-base sm:text-lg md:text-xl mb-8">
+            InfiniTask is your all-in-one task management solution, designed to streamline your workflow and boost productivity.
+          </p>
+        </div>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
-    <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-white text-center">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4">Real-Time Calendar</h2>
-      <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
-    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
+          <div className="bg-gray-800 p-4 sm:p-6 rounded-2xl shadow-xl text-white text-center">
+            <h2 className="text-lg sm:text-xl font-bold mb-3">Real-Time Calendar</h2>
+            <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+          </div>
 
-    <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-white text-center">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4">About Us</h2>
-      <p className="text-lg text-gray-300">Learn more about our mission and how we help you stay productive.</p>
-    </div>
+          <div className="bg-gray-800 p-4 sm:p-6 rounded-2xl shadow-xl text-white text-center">
+            <h2 className="text-lg sm:text-xl font-bold mb-3">About Us</h2>
+            <p className="text-base sm:text-lg text-gray-300">Learn more about our mission and how we help you stay productive.</p>
+          </div>
 
-    <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-white text-center">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4">Documents</h2>
-      <p className="text-lg text-gray-300">Access important files and resources related to your tasks.</p>
-    </div>
-  </div>
-</main>
-
+          <div className="bg-gray-800 p-4 sm:p-6 rounded-2xl shadow-xl text-white text-center">
+            <h2 className="text-lg sm:text-xl font-bold mb-3">Documents</h2>
+            <p className="text-base sm:text-lg text-gray-300">Access important files and resources related to your tasks.</p>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
