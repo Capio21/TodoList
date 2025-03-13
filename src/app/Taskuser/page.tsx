@@ -19,16 +19,6 @@ interface Activity {
   collaborators?: number[]; // New field for collaborators
 }
 
-const alarmSound = new Audio("/alarm-sound.mp3");
-
-const playAlarm = () => {
-  alarmSound.currentTime = 0;
-  
-  alarmSound.play().catch(error => {
-    console.error("Error playing alarm sound:", error);
-  });
-};
-
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 const ProgressBar = ({ percentage }: { percentage: number }) => {
@@ -70,6 +60,16 @@ const ActivityPage = () => {
   const router = useRouter();
   const [dependencies, setDependencies] = useState<Activity[]>([]);
   const [users, setUsers] = useState<{ id: number; username: string }[]>([]); // New state for users
+
+  const alarmSound = new Audio("/alarm-sound.mp3");
+
+const playAlarm = () => {
+  alarmSound.currentTime = 0;
+  
+  alarmSound.play().catch(error => {
+    console.error("Error playing alarm sound:", error);
+  });
+};
 
   const fetchActivities = async () => {
     try {
