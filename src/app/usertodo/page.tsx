@@ -9,7 +9,7 @@ import Archive from "./Archive";
 import Adminbar from "../Components/adminsidebar";
 import authUser from "../utils/authUser";
 
-const API_BASE_URL = "https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api";
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 interface Task {
   id: number;

@@ -30,7 +30,7 @@ const SidebarNavigation = () => {
         return;
       }
       await axios.post(
-        "https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/logout",
+        "http://127.0.0.1:8000/api/logout",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

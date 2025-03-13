@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import authUser from "./utils/authUser";
+import authUser  from "./utils/authUser";
 
 const Home = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -34,7 +34,7 @@ const Home = () => {
     setIsSignedIn(!isSignedIn);
   };
 
-  const handleDateClick = (day: number) => {
+  const handleDateClick = (day) => {
     setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day));
   };
 
@@ -123,36 +123,36 @@ const Home = () => {
         </nav>
       </header>
 
-      <main className="flex flex-col lg:flex-row w-full max-w-7xl p-12 relative z-10">
-        <div className="w-full lg:w-1/2 p-8 flex flex-col items-center text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-green-600 mb-8">
-            Cramming? Organize Your Tasks, Achieve Your Goals
-          </h1>
-          <p className="text-gray-300 text-xl sm:text-2xl mb-10">
-            InfiniTask is your all-in-one task management solution, designed to streamline your workflow and boost productivity.
-          </p>
-        </div>
+      <main className="flex flex-col items-center justify-center w-full max-w-7xl px-6 py-16 mx-auto text-center">
+  <div className="w-full max-w-4xl">
+    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-green-600 mb-8 leading-tight">
+      Cramming? Organize Your Tasks, Achieve Your Goals
+    </h1>
+    <p className="text-gray-300 text-lg sm:text-xl md:text-2xl mb-10">
+      InfiniTask is your all-in-one task management solution, designed to streamline your workflow and boost productivity.
+    </p>
+  </div>
 
-        <div className="w-full lg:w-1/2 p-8 flex flex-col items-end">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 w-full">
-            <div className="bg-gray-800 p-4 rounded-lg shadow-lg text-white text-center">
-              <h2 className="text-lg sm:text-xl font-bold mb-3">Real-Time Calendar</h2>
-              <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
-            </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
+    <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-white text-center">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4">Real-Time Calendar</h2>
+      <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+    </div>
 
-            <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-white text-center">
-              <h2 className="text-xl sm:text-2xl font-bold mb-6">About Us</h2>
-              <p className="text-lg text-gray-300">Learn more about our mission and how we help you stay productive.</p>
-            </div>
+    <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-white text-center">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4">About Us</h2>
+      <p className="text-lg text-gray-300">Learn more about our mission and how we help you stay productive.</p>
+    </div>
 
-            <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-white text-center col-span-2">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-6">Documents</h2>
-              <p className="text-lg text-gray-300">Access important files and resources related to your tasks.</p>
-            </div>
-          </div>
-        </div>
-      </main>
+    <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-white text-center">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4">Documents</h2>
+      <p className="text-lg text-gray-300">Access important files and resources related to your tasks.</p>
+    </div>
+  </div>
+</main>
+
     </div>
   );
 }
-export default authUser(Home);
+
+export default authUser (Home);

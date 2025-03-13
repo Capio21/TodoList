@@ -28,7 +28,7 @@ export default function Archive() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/archived-tasks");
+      const response = await axios.get("http://127.0.0.1:8000/api/archived-tasks");
       setArchivedTasks(response.data);
     } catch (error) {
       setError("Failed to fetch archived tasks.");
@@ -40,7 +40,7 @@ export default function Archive() {
 
   const restoreTask = async (taskId: number) => {
     try {
-      const response = await axios.put(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/tasks/restore/${taskId}`);
+      const response = await axios.put(`http://127.0.0.1:8000/api/tasks/restore/${taskId}`);
       if (response.status === 200 && response.data.task.archived === 0) {
         setArchivedTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
       }

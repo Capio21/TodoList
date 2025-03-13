@@ -40,7 +40,7 @@ const Dashboard = () => {
 
   const fetchAdmins = async () => {
     try {
-      const response = await axios.get("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/admins");
+      const response = await axios.get("http://127.0.0.1:8000/api/admins");
       setAdmins(response.data);
     } catch (error: any) {
       setError(error.message || "Error fetching admins");
@@ -49,7 +49,7 @@ const Dashboard = () => {
 
   const fetchUserStats = async () => {
     try {
-      const response = await axios.get("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/user-stats");
+      const response = await axios.get("http://127.0.0.1:8000/api/user-stats");
       setUserStats(response.data);
     } catch (err) {
       setError("Failed to load statistics.");
@@ -60,7 +60,7 @@ const Dashboard = () => {
 
   const deleteAdmin = async () => {
     try {
-      const response = await axios.delete(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/admins/${adminToDelete}`);
+      const response = await axios.delete(`http://127.0.0.1:8000/api/admins/${adminToDelete}`);
       console.log(response.data);
       fetchAdmins();  // Refresh the admin list after deletion
       setConfirmDeleteModal(false);  // Close the modal
@@ -102,7 +102,7 @@ const Dashboard = () => {
     }
 
     try {
-      await axios.post("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/Adminregister", form, {
+      await axios.post("http://127.0.0.1:8000/api/Adminregister", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       fetchAdmins();
@@ -213,7 +213,7 @@ const Dashboard = () => {
                 >
                     {admin.profile_image ? (
                         <img
-                            src={`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/${admin.profile_image}`}
+                            src={`http://127.0.0.1:8000/${admin.profile_image}`}
                             alt="Profile"
                             className="w-24 h-24 rounded-full object-cover mb-4"
                         />

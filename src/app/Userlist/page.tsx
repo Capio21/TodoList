@@ -65,7 +65,7 @@ const UsersTable = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/users", {
+      const response = await axios.get("http://127.0.0.1:8000/api/users", {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("authToken")}` },
       });
       if (response.data) {
@@ -92,7 +92,7 @@ const UsersTable = () => {
     if (!selectedUser ) return;
 
     try {
-      await axios.put(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/users/${selectedUser .id}`, {
+      await axios.put(`http://127.0.0.1:8000/api/users/${selectedUser .id}`, {
         username: editUsername,
         email: editEmail,
       });
@@ -111,7 +111,7 @@ const UsersTable = () => {
     if (!isConfirmed) return;
 
     try {
-      await axios.delete(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/users/${userId}`);
+      await axios.delete(`http://127.0.0.1:8000/api/users/${userId}`);
       fetchUsers(); // Refresh user list after deletion
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -153,7 +153,7 @@ const UsersTable = () => {
                                 >
                                     {/* Profile Image */}
                                     <img
-                                        src={user.profile_image ? `https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/${user.profile_image}` : "/default-profile.png"}
+                                        src={user.profile_image ? `http://127.0.0.1:8000/${user.profile_image}` : "/default-profile.png"}
                                         alt="Profile"
                                         className="w-24 h-24 rounded-full object-cover border-4 border-green-500 shadow-lg mb-3"
                                     />
