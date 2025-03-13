@@ -49,7 +49,7 @@ const TaskForm: React.FC<{
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/users")
+      .get("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/users")
       .then((response) => setUsers(response.data))
       .catch((error) => console.error("Error fetching users:", error));
   }, []);
@@ -76,11 +76,11 @@ const TaskForm: React.FC<{
       };
 
       if (editingTask) {
-        await axios.put(`http://127.0.0.1:8000/api/tasks/${editingTask.id}`, taskData);
+        await axios.put(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/tasks/${editingTask.id}`, taskData);
         setTasks(tasks.map((task) => (task.id === editingTask.id ? { ...task, ...taskData } : task)));
         setEditingTask(null);
       } else {
-        const response = await axios.post("http://127.0.0.1:8000/api/tasks", taskData);
+        const response = await axios.post("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/tasks", taskData);
         setTasks([...tasks, response.data]);
       }
 

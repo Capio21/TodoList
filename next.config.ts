@@ -13,7 +13,7 @@ module.exports = {
               headers: [
                   {
                       key: "Access-Control-Allow-Origin",
-                      value: "http://127.0.0.1:8000",
+                      value: "https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app",
                   },
                   {
                       key: "Access-Control-Allow-Credentials",

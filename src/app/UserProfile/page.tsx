@@ -25,7 +25,7 @@ const TodoPage = () =>{
     }
 
     axios
-      .get("http://127.0.0.1:8000/api/user", {
+      .get("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/user", {
         headers: { Authorization: `Bearer ${authToken}` },
       })
       .then((response) => {
@@ -56,7 +56,7 @@ const TodoPage = () =>{
       }
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/update-profile",
+        "https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/update-profile",
         formData,
         {
           headers: {
@@ -96,7 +96,7 @@ const TodoPage = () =>{
     {user?.profile_image ? (
       <img
         className="w-full h-full object-cover"
-        src={`http://127.0.0.1:8000/${user.profile_image}`}
+        src={`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/${user.profile_image}`}
         alt="Profile"
       />
     ) : (

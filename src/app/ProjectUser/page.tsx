@@ -25,7 +25,7 @@ const TodoPage = () => {
     }
 
     axios
-      .post("http://127.0.0.1:8000/api/getUserId", { authToken })
+      .post("https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/getUserId", { authToken })
       .then((response) => {
         setUserId(response.data.id);
         fetchTasks(response.data.id);
@@ -38,7 +38,7 @@ const TodoPage = () => {
 
   const fetchTasks = (userId) => {
     axios
-      .get(`http://127.0.0.1:8000/api/tasks/${userId}`)
+      .get(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/tasks/${userId}`)
       .then((response) => {
         setTasks(response.data);
         setLoading(false);
@@ -51,7 +51,7 @@ const TodoPage = () => {
 
   const markAsDone = (taskId) => {
     axios
-      .patch(`http://127.0.0.1:8000/api/tasks/${taskId}/markAsDone`, {
+      .patch(`https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/tasks/${taskId}/markAsDone`, {
         status: "complete",
       })
       .then(() => {

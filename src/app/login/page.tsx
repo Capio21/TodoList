@@ -29,7 +29,7 @@ export default function Login() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/login",
+        "https://32d7-2001-4451-8712-1800-91e2-26cf-1dd-5068.ngrok-free.app/api/login",
         { username, password },
         { withCredentials: true }
       );
@@ -127,7 +127,7 @@ export default function Login() {
               </button>
             </div>
           </form>
-          
+
   
           <p className="text-lg text-center text-gray-400 mt-4">
             New here? <a href="/Signup" className="text-green-400 hover:underline">Create an account</a>
