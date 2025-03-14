@@ -6,7 +6,7 @@ import axios from "axios";
 import Sidebar from "../Components/Sidebar";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import authUser  from "../utils/authUser";
+import authUser from "../utils/authUser";
 
 const TodoPage = () => {
   const router = useRouter();
@@ -14,76 +14,83 @@ const TodoPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
-    const authToken = sessionStorage.getItem("authToken");
-    if (!authToken) {
-      setError("Auth token not found");
-      setLoading(false);
-      return;
-    }
+    const authenticateUser = async () => {
+      try {
+        const authToken = sessionStorage.getItem("authToken");
+        if (!authToken) {
+          alert("Auth token not found");
+          setLoading(false);
+          return;
+        }
 
-    axios
-      .post("http://127.0.0.1:8000/api/getUserId", { authToken })
-      .then((response) => {
+        const response = await axios.post("http://127.0.0.1:8000/api/getUserId", { authToken });
         setUserId(response.data.id);
         fetchTasks(response.data.id);
-      })
-      .catch(() => {
-        setError("Failed to authenticate user");
+      } catch (error) {
+        console.error("Failed to authenticate user:", error);
+        alert("Failed to authenticate user");
         setLoading(false);
-      });
+      }
+    };
+
+    authenticateUser();
   }, []);
 
-  const fetchTasks = (userId) => {
-    axios
-      .get(`http://127.0.0.1:8000/api/tasks/${userId}`)
-      .then((response) => {
-        setTasks(response.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to fetch tasks");
-        setLoading(false);
+  const fetchTasks = async (userId) => {
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${userId}`);
+      const now = new Date();
+
+      const updatedTasks = response.data.map((task) => {
+        const deadline = new Date(task.deadline);
+
+        // Check if task is overdue and needs updating
+        if (task.status !== "complete" && now > deadline) {
+          updateTaskStatus(task.id, "overdue"); // Update in database
+          return { ...task, status: "overdue" };
+        }
+        return task;
       });
-  };
 
-  const markAsDone = (taskId) => {
-    axios
-      .patch(`http://127.0.0.1:8000/api/tasks/${taskId}/markAsDone`, {
-        status: "complete",
-      })
-      .then(() => {
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === taskId ? { ...task, status: "complete" } : task
-          )
-        );
-      })
-      .catch(() => console.error("Failed to mark task as done"));
-  };
-
-  const completedTasks = tasks.filter((task) => task.status === "complete").length;
-  const percentage = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
-
-  const nextPage = () => {
-    if (currentPage < tasks.length - 1) {
-      setCurrentPage(currentPage + 1);
+      setTasks(updatedTasks);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+      alert("Failed to fetch tasks");
+      setLoading(false);
     }
   };
 
-  const [progress, setProgress] = useState(0);
+  // Function to update task status in the database
+  const updateTaskStatus = async (taskId, status) => {
+    try {
+      await axios.patch(`http://127.0.0.1:8000/api/tasks/${taskId}/updateStatus`, { status });
+    } catch (error) {
+      console.error(`Failed to update task ${taskId} to ${status}:`, error);
+    }
+  };
 
-  useEffect(() => {
-    setTimeout(() => {
-      setProgress(percentage);
-    }, 300); // Simulate animation delay
-  }, [percentage]);
+  const markAsDone = async () => {
+    if (!selectedTask) return;
 
-  const prevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
+    try {
+      await axios.patch(`http://127.0.0.1:8000/api/tasks/${selectedTask.id}/markAsDone`, {
+        status: "complete",
+      });
+
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === selectedTask.id ? { ...task, status: "complete" } : task
+        )
+      );
+      setShowModal(false);
+    } catch (error) {
+      console.error("Failed to mark task as done:", error);
+      alert("Failed to mark task as done");
     }
   };
 
@@ -94,101 +101,127 @@ const TodoPage = () => {
         <h1 className="text-2xl font-extrabold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-gray-500 drop-shadow-lg">
           ADMIN TASK
         </h1>
+        <br />
+
+        {/* Enlarged Retro Green Progress Bar */}
+        <div className="w-52 h-40 flex justify-center items-center">
+          <CircularProgressbar
+            value={
+              (tasks.filter((t) => t.status === "complete").length /
+                tasks.length) *
+              100
+            }
+            text={`${Math.round(
+              (tasks.filter((t) => t.status === "complete").length /
+                tasks.length) *
+                100
+            )}%`}
+            styles={buildStyles({
+              pathColor: `rgba(0, 128, 0, 1)`,
+              textColor: "#fff",
+              trailColor: "#444",
+              strokeWidth: 10,
+              textSize: "24px",
+              fontFamily: "'Press Start 2P', cursive",
+            })}
+          />
+        </div>
+        <br />
+        <br />
+
         {loading ? (
           <p>Loading tasks...</p>
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <>
-            {tasks.length > 0 && (
-              <div className="w-full flex flex-col items-center">
-                {tasks.map((task, index) => {
-                  if (index !== currentPage) return null;
-                  const previousTaskCompleted =
-                    index === 0 || tasks[index - 1]?.status === "complete";
-
-                  return (
-                    <div
-                      key={task.id}
-                      className={`relative border-2 border-gray-700 bg-gray-800 p-4 shadow-lg transition-all w-full sm:w-9/10 lg:w-3/4 rounded-lg flex items-center space-x-6`}
-                    >
-                      {/* Left Side - Progress Bar */}
-                      <div className="w-40 flex justify-center items-center">
-                        <CircularProgressbar
-                          value={percentage}
-                          text={`${Math.round(percentage)}%`}
-                          styles={buildStyles({
-                            pathColor: `rgba(62, 152, 199, ${percentage / 100})`,
-                            textColor: '#fff',
-                            trailColor: '#d6d6d6',
-                          })}
-                        />
-                      </div>
-
-                      {/* Right Side - Task Details */}
-          <div className="relative flex-1 flex flex-col items-center text-white">
-            {/* Task Title */}
-            <div className="bg-green-600 border-b-2 border-gray-700 p-2 font-bold text-center w-full">
-              <h3 className="text-lg font-bold">{task.title}</h3>
-            </div>
-
-            {/* Tags Pinned in Corner */}
-            {task.tags && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg">
-                {Array.isArray(task.tags) ? task.tags.join(', ') : task.tags}
-              </div>
-            )}
-
-            {/* Task Details */}
-            <div className="p-2 text-sm text-center space-y-2">
-              <p className="text-xs">{task.description}</p>
-              <p>
-                <strong>Deadline:</strong> {new Date(task.deadline).toLocaleString()}
-              </p>
-
-           {/* Mark as Done Button */}
-<button
-  onClick={() => markAsDone(task.id)}
-  disabled={task.status === "complete"}
-  className={`w-full py-2 border-2 border-gray-700 shadow-md font-bold transition-all cursor-pointer mt-2 ${
-    task.status === "complete"
-      ? "bg-green-500 cursor-not-allowed"
-      : "bg-green-600 hover:bg-green-500"
-  }`}
->
-  {task.status === "complete" ? "Completed" : "Mark as Done"}
-</button>
-
-            </div>
-          </div>
-
+          tasks.length > 0 && (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="relative border-2 border-gray-700 bg-gray-800 p-4 shadow-lg transition-all rounded-lg flex flex-col items-center text-white text-center"
+                >
+                  {/* Tags Pinned in Corner */}
+                  {task.tags && (
+                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg">
+                      {Array.isArray(task.tags)
+                        ? task.tags.join(", ")
+                        : task.tags}
                     </div>
-                  );
-                })}
-                <div className="flex justify-between mt-4 w-full max-w-md">
-                  <button
-                    onClick={prevPage}
-                    disabled={currentPage === 0}
-                    className="px-4 py-2 bg-gray-700 border-2 border-gray-500 shadow-md font-bold rounded hover:bg-gray-600 disabled:opacity-50"
+                  )}
+
+                  {/* Title inside a Green Box */}
+                  <h3 className="bg-green-600 text-white text-lg font-bold p-2 rounded-md w-full">
+                    {task.title}
+                  </h3>
+
+                  <p className="text-base font-semibold">{task.description}</p>
+
+                  {/* Deadline in Red */}
+                  <p
+                    className={`font-bold ${
+                      task.status === "overdue" ? "text-red-500" : "text-gray-300"
+                    }`}
                   >
-                    ◀ Previous
-                  </button>
-                  <span className="text-lg font-semibold">{currentPage + 1} / {tasks.length}</span>
-                  <button
-                    onClick={nextPage}
-                    disabled={currentPage >= tasks.length - 1}
-                    className="px-4 py-2 bg-gray-700 border-2 border-gray-500 shadow-md font-bold rounded hover:bg-gray-600 disabled:opacity-50"
+                    <strong>Deadline:</strong> {new Date(task.deadline).toLocaleString()}
+                  </p>
+
+                  {/* Status Indicator */}
+                  <p
+                    className={`text-sm font-bold mt-2 ${
+                      task.status === "complete"
+                        ? "text-green-400"
+                        : task.status === "overdue"
+                        ? "text-red-500"
+                        : "text-yellow-400"
+                    }`}
                   >
-                    Next ▶
-                  </button>
+                    {task.status.toUpperCase()}
+                  </p>
+
+                  {/* Button Hidden When Overdue */}
+                  {task.status !== "complete" && task.status !== "overdue" && (
+                    <button
+                      onClick={() => {
+                        setSelectedTask(task);
+                        setShowModal(true);
+                      }}
+                      className="w-full py-2 border-2 border-gray-700 shadow-md font-bold transition-all cursor-pointer mt-2 bg-green-600 hover:bg-green-500"
+                    >
+                      Mark as Done
+                    </button>
+                  )}
                 </div>
-              </div>
-            )}
-          </>
+              ))}
+            </div>
+          )
         )}
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-gray-900 p-6 rounded-lg shadow-lg text-gray-900 w-96 text-center">
+            <h2 className="text-lg font-bold mb-4">Confirm Action</h2>
+            <p>Are you sure you want to mark "{selectedTask?.title}" as done?</p>
+            <div className="mt-4 flex justify-center space-x-4">
+              <button
+                onClick={markAsDone}
+                className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-500"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-500"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default authUser (TodoPage);
+export default authUser(TodoPage);
