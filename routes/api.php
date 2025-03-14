@@ -89,6 +89,8 @@ Route::patch('tasks/{taskId}/markAsDone', [AdminProjectController::class, 'markA
 
 Route::delete('tasks/{taskId}', [AdminProjectController::class, 'deleteTask']);
 Route::put('/tasks/{id}/archive', [AdminProjectController::class, 'archiveTask']);
+Route::patch('/tasks/{id}/updateStatus', [AdminProjectController::class, 'updateStatus']);
+
 
 Route::get('tasks/{taskId}/edit', [AdminProjectController::class, 'editTask']);
 Route::put('tasks/{taskId}', [AdminProjectController::class, 'updateTask']);
@@ -142,6 +144,15 @@ Route::put('/progress/{progress}', [ProgressController::class, 'update']);
 Route::delete('/progress/{progress}', [ProgressController::class, 'destroy']);
 
 
+
+
+// Route::middleware('role')->group(function () {
+//     Route::get('/admin/dashboard', [AuthController::class, 'index']);
+// });
+
+// Route::middleware('role')->group(function () {
+//     Route::get('/user/dashboard', [AuthController::class, 'index']);
+// });
 
 
 Route::get('/pusher-test', function () {

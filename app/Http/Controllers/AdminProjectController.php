@@ -276,5 +276,19 @@ class AdminProjectController extends Controller
         ]);
     }
 
+    public function updateStatus(Request $request, $id)
+{
+    $task = Task::find($id);
+    if (!$task) {
+        return response()->json(['message' => 'Task not found'], 404);
+    }
+
+    $task->status = $request->status;
+    $task->save();
+
+    return response()->json(['message' => 'Task status updated successfully']);
+}
+
+
 
 }
