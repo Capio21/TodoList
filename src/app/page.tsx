@@ -99,7 +99,7 @@ const Home = () => {
 
       <header className="w-full p-4 sm:p-8 flex flex-col sm:flex-row justify-between items-center border-b border-gray-600 relative z-10 text-lg sm:text-xl">
         <div className="flex items-center">
-          <Image src="/next.svg" alt="Next.js Logo" width={40} height={40} className="mr-2 sm:mr-4" />
+        
           <span className="text-2xl sm:text-3xl font-bold text-green-600">InfiniTask</span>
         </div>
 
