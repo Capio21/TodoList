@@ -97,16 +97,20 @@ const TodoList = () => {
   const chartData = Object.values(groupedData);
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-gray-900">
+    <div className="relative flex min-h-screen bg-gray-900 text-gray-900">
+   
       <Sidebar />
       <div className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="w-full bg-gradient-to-r from-green-500 to-gray-400 rounded-xl p-4 mb-6 flex flex-col sm:flex-row justify-between items-center shadow-lg">
           <div className="text-lg font-bold text-white px-4 py-2 rounded-md bg-gradient-to-r from-green-500 to-green-400 shadow-md hover:shadow-lg transition-all">
             Overview
+            
           </div>
           <div className="text-lg font-bold text-center sm:text-right">
             📅 {currentDate} | ⏰ {currentTime}
           </div>
+  
+
         </div>
 
         <div className="w-full bg-gray-300 rounded-xl p-4 mb-6 shadow-lg">
@@ -144,6 +148,7 @@ const TodoList = () => {
 
         <div className="w-full bg-gray-300 rounded-xl p-4 mb-3 shadow-lg">
           <div className="text-lg font-bold mb-4">Task Status Over Time</div>
+       
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
@@ -154,11 +159,14 @@ const TodoList = () => {
               <Line type="monotone" dataKey="complete" stroke="#98FF98" strokeWidth={2} />
               <Line type="monotone" dataKey="overdue" stroke="#FF6347" strokeWidth={2} />
             </LineChart>
+            
           </ResponsiveContainer>
+          
         </div>
       </div>
     </div>
   );
+
 }
 
 export default authUser(TodoList);

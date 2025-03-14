@@ -128,13 +128,21 @@ export default function Sidebar() {
           </nav>
 
           <div className="mt-auto w-full space-y-2">
-            <button 
-              onClick={() => setShowNotifications(!showNotifications)} 
-              className="w-full bg-gray-900 hover:bg-[#1A1B1E] py-3 px-4 rounded-xl shadow-md flex items-center justify-center text-green-500 font-medium transition-all"
-            >
-              <FaBell className="mr-0.5 text-green-500" />
-              <span className={`${isOpen ? "block" : "hidden"}`}>Notifications</span>
-            </button>
+          <button 
+  onClick={() => setShowNotifications(!showNotifications)} 
+  className="relative w-full bg-gray-900 hover:bg-[#1A1B1E] py-3 px-4 rounded-xl shadow-md flex items-center justify-center text-green-500 font-medium transition-all"
+>
+  <FaBell className="mr-0.5 text-green-500" />
+  <span className={`${isOpen ? "block" : "hidden"}`}>Notifications</span>
+
+  {/* Unread Notification Badge */}
+  {notifications.filter(n => n.status === "unread").length > 0 && (
+    <span className="absolute bottom-7 left-7 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+      {notifications.filter(n => n.status === "unread").length}
+    </span>
+  )}
+</button>
+
 
             <button 
               onClick={() => setShowLogoutModal(true)} 

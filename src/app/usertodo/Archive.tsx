@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
+
 
 interface ArchivedTask {
   id: number;
@@ -53,7 +55,7 @@ export default function Archive() {
   const currentTasks = archivedTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage);
 
   return (
-    <section className="p-6 text-center bg-gray-700 text-white rounded-lg shadow-lg max-w-2xl mx-auto">
+    <section className="p-4 text-center bg-gray-700 text-white rounded-lg shadow-lg max-w-full mx-auto">
       <h3 className="text-lg font-bold bg-gray-800 p-3 rounded">Archived Tasks</h3>
       {loading ? (
         <p>Loading archived tasks...</p>
@@ -63,59 +65,72 @@ export default function Archive() {
         <p>No archived tasks found.</p>
       ) : (
         <div className="max-h-80 overflow-y-auto">
-          <table className="w-full border-collapse bg-gray-900 text-white border border-gray-600">
-            <thead>
-              <tr className="bg-gray-800">
-                <th className="p-2 border border-gray-600">ID</th>
-                <th className="p-2 border border-gray-600">Title</th>
-                <th className="p-2 border border-gray-600">Description</th>
-                <th className="p-2 border border-gray-600">Status</th>
-                <th className="p-2 border border-gray-600">Deadline</th>
-                <th className="p-2 border border-gray-600">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentTasks.map((task) => (
-                <tr key={task.id} className="bg-gray-700">
-                  <td className="p-2 border border-gray-600">{task.id}</td>
-                  <td className="p-2 border border-gray-600 cursor-pointer underline" onClick={() => setSelectedTask(task)}>
-                    {task.title}
-                  </td>
-                  <td className="p-2 border border-gray-600">
-                    {task.description.length > 50 ? (
-                      <span>
-                        {task.description.slice(0, 50)}...
-                        <button className="text-blue-400 ml-2" onClick={() => setSelectedTask(task)}>Show More</button>
-                      </span>
-                    ) : (
-                      task.description
-                    )}
-                  </td>
-                  <td className="p-2 border border-gray-600">{task.status}</td>
-                  <td className="p-2 border border-gray-600">{task.deadline}</td>
-                  <td className="p-2 border border-gray-600">
-                    <button 
-                      onClick={() => restoreTask(task.id)}
-                      className="bg-green-600 text-white p-2 rounded hover:bg-green-500">
-                      Restore
-                    </button>
-                  </td>
+          {/* Responsive Table Container */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[400px] md:min-w-[600px] border-collapse bg-gray-900 text-white border border-gray-600">
+              <thead className="hidden md:table-header-group">
+                <tr className="bg-gray-800">
+                  <th className="p-2 border border-gray-600">ID</th>
+                  <th className="p-2 border border-gray-600">Title</th>
+                  <th className="p-2 border border-gray-600">Description</th>
+                  <th className="p-2 border border-gray-600">Status</th>
+                  <th className="p-2 border border-gray-600">Deadline</th>
+                  <th className="p-2 border border-gray-600">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 flex justify-center space-x-2">
+              </thead>
+              <tbody>
+                {currentTasks.map((task) => (
+                  <tr key={task.id} className="bg-gray-700 block md:table-row mb-2 md:mb-0 border border-gray-600 rounded-lg md:rounded-none md:border-none">
+                    <td className="p-2 border border-gray-600 md:border-none block md:table-cell text-sm">{task.id}</td>
+                    <td className="p-2 border border-gray-600 md:border-none block md:table-cell text-sm font-bold cursor-pointer underline" onClick={() => setSelectedTask(task)}>
+                      {task.title}
+                    </td>
+                    <td className="p-2 border border-gray-600 md:border-none block md:table-cell text-sm">
+                      {task.description.length > 50 ? (
+                        <span>
+                          {task.description.slice(0, 50)}...
+                          <button className="text-blue-400 ml-2 text-xs" onClick={() => setSelectedTask(task)}>Show More</button>
+                        </span>
+                      ) : (
+                        task.description
+                      )}
+                    </td>
+                    <td className="p-2 border border-gray-600 md:border-none block md:table-cell text-sm">{task.status}</td>
+                    <td className="p-2 border border-gray-600 md:border-none block md:table-cell text-sm">{task.deadline}</td>
+                    <td className="p-2 border border-gray-600 md:border-none block md:table-cell">
+                      <button 
+                        onClick={() => {
+                          restoreTask(task.id);
+                          toast.success("Task restored successfully!");
+                        }}
+                        className="bg-green-600 text-white text-xs p-1 rounded hover:bg-green-500 w-full md:w-auto">
+                        Restore
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination Controls */}
+          <div className="mt-4 flex flex-col md:flex-row justify-center items-center gap-2">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              onClick={() => {
+                setCurrentPage((prev) => Math.max(prev - 1, 1));
+                toast.success("Moved to previous page");
+              }}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
+              className="px-3 py-2 bg-gray-600 text-white text-xs rounded hover:bg-gray-500 disabled:opacity-50 w-full md:w-auto">
               Previous
             </button>
-            <span className="text-lg font-bold">Page {currentPage} of {totalPages}</span>
+            <span className="text-sm font-bold">Page {currentPage} of {totalPages}</span>
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              onClick={() => {
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                toast.success("Moved to next page");
+              }}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
+              className="px-3 py-2 bg-gray-600 text-white text-xs rounded hover:bg-gray-500 disabled:opacity-50 w-full md:w-auto">
               Next
             </button>
           </div>
