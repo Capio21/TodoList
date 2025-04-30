@@ -1,187 +1,429 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-import { FaSignOutAlt, FaEdit, FaSave } from "react-icons/fa";
-import Sidebar from "../Components/Sidebar";
-import authUser from "../utils/authUser";
+import type React from "react"
 
-const TodoPage = () =>{
-  const router = useRouter();
-  const [user, setUser ] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [profileImage, setProfileImage] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import axios from "axios"
+import Sidebar from "../Components/Sidebar"
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts"
+import { ToastContainer, toast } from "react-toastify"
+import authUser from "../utils/authUser"
+import { Edit, Save, X, Clock, CheckCircle, AlertTriangle, Archive, Grid, Bookmark } from "lucide-react"
 
-  useEffect(() => {
-    const authToken = sessionStorage.getItem("authToken");
-
-    if (!authToken) {
-      router.push("/login");
-      return;
-    }
-
-    axios
-      .get("http://127.0.0.1:8000/api/user", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      })
-      .then((response) => {
-        setUser (response.data.user);
-        setUsername(response.data.user.username);
-        setEmail(response.data.user.email);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching user:", error);
-        router.push("/login");
-      });
-  }, [router]);
-
-  const handleSave = async () => {
-    try {
-      const authToken = sessionStorage.getItem("authToken");
-      if (!authToken) {
-        console.error("No token found.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("username", username);
-      formData.append("email", email);
-      if (profileImage) {
-        formData.append("profile_image", profileImage);
-      }
-
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/update-profile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      setUser (response.data.user);
-      setEditing(false);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-    }
-  };
-
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  return (
-    <div className="flex min-h-screen bg-gray-900 text-white items-center justify-center p-2">
-      <Sidebar />
-      <div className="flex-1 p-6 flex flex-col items-center">
-        <h1 className="text-4xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 drop-shadow-lg">
-          User Profile
-        </h1>
-
-        <br />
-        {/* Main Content Wrapper */}
-        <div className="container max-w-6xl w-full flex flex-col lg:flex-row gap-6">
-          
-          {/* Left Card - Profile Image & Name */}
-<div className="bg-gray-200 p-5 rounded-lg border border-green-600 flex flex-col items-center w-full lg:w-1/4">
-  <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-green-600">
-    {user?.profile_image ? (
-      <img
-        className="w-full h-full object-cover"
-        src={`http://127.0.0.1:8000/${user.profile_image}`}
-        alt="Profile"
-      />
-    ) : (
-      <div className="flex items-center justify-center w-full h-full bg-gray-300 text-gray-600 text-sm">
-        No Image
-      </div>
-    )}
-  </div>
-  <h2 className="text-gray-800 text-xl font-bold mt-3">{user?.username}</h2>
-  
-  <button
-    onClick={() => setEditing(true)}
-    className="w-full bg-green-500 hover:bg-green-400 py-2 px-4 rounded-md mt-4 flex items-center justify-center text-sm"
-  >
-    <FaEdit className="mr-1" /> Edit Profile
-  </button>
-</div>
-
-  
-        {/* Right Card - User Details */}
-<div className="bg-gray-300 p-5 rounded-lg border border-green-600 w-full lg:w-2/3">
-  
-  {/* Cover Image */}
-  <div className="h-40 overflow-hidden rounded-md">
-    <img
-      className="w-full h-full object-cover"
-      src="https://images.unsplash.com/photo-1605379399642-870262d3d051?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
-      alt="Cover"
-    />
-  </div>
-
-  {/* User Details & Actions */}
-  <div className="text-center px-4 py-4">
-    {loading ? (
-      <p className="text-gray-600 mt-2 text-sm">Loading user data...</p>
-    ) : editing ? (
-      <>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full p-2 rounded-md bg-gray-200 text-gray-800 border border-green-600 focus:ring focus:ring-green-500 text-sm"
-          placeholder="Username"
-        />
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 mt-2 rounded-md bg-gray-200 text-gray-800 border border-green-600 focus:ring focus:ring-green-500 text-sm"
-          placeholder="Email"
-        />
-        <input
-          type="file"
-          onChange={(e) => setProfileImage(e.target.files[0])}
-          className="w-full p-2 mt-2 rounded-md bg-gray-200 text-gray-800 border border-green-600 text-sm"
-        />
-        <button
-          onClick={handleSave}
-          className="w-full bg-green-500 hover:bg-green-400 py-2 px-4 rounded-md mt-3 flex items-center justify-center text-sm"
-        >
-          <FaSave className="mr-1" /> Save
-        </button>
-      </>
-    ) : (
-      <>
-        <p className="text-gray-600 mt-1 text-sm">{user?.email}</p>
-        <hr className="mt-3 border-green-600" />
-        <div className="flex bg-gray-200 mt-3 rounded-md border border-green-600">
-          <div className="text-center w-1/2 p-3 hover:bg-gray-300 cursor-pointer text-xs">
-            <p className="text-gray-600">Joined: {formatDateTime(user?.created_at)}</p>
-          </div>
-          <div className="border border-green-600"></div>
-          <div className="text-center w-1/2 p-3 hover:bg-gray-300 cursor-pointer text-xs">
-            <p className="text-gray-600">Last updated: {formatDateTime(user?.updated_at)}</p>
-          </div>
-        </div>
-      </>
-    )}
-  </div>
-</div>
-
-        </div>
-      </div>
-    </div>
-);
+interface Activity {
+  id: number
+  status: "pending" | "complete" | "overdue"
+  archive: boolean
+  date_started: string
 }
 
-export default authUser (TodoPage);
+const TodoPage = () => {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [editing, setEditing] = useState(false)
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [showModal, setShowModal] = useState(false)
+  const [activeTab, setActiveTab] = useState("tasks")
+
+  const API_BASE_URL = "https://infinitech-api5.site"
+
+  useEffect(() => {
+    const authToken = sessionStorage.getItem("authToken")
+    if (!authToken) return router.push("/login")
+
+    axios
+      .get(`${API_BASE_URL}/api/user`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      })
+      .then((res) => {
+        setUser(res.data.user)
+        setUsername(res.data.user.username)
+        setEmail(res.data.user.email)
+        setImagePreview(
+          res.data.user.profile_image
+            ? `${API_BASE_URL}/${res.data.user.profile_image}`
+            : "/default-avatar.png",
+        )
+        setLoading(false)
+      })
+      .catch(() => router.push("/login"))
+
+    axios
+      .get(`${API_BASE_URL}/api/activities/${authToken}`)
+      .then((res) => Array.isArray(res.data) && setActivities(res.data))
+      .catch((err) => console.error("Error fetching activities", err))
+  }, [])
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setProfileImage(file)
+      setImagePreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleSave = async () => {
+    const authToken = sessionStorage.getItem("authToken")
+    const formData = new FormData()
+    formData.append("username", username)
+    formData.append("email", email)
+    if (profileImage) formData.append("profile_image", profileImage)
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/update-profile`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authToken}`,
+        },
+      })
+      toast.success("Profile updated successfully!")
+      setEditing(false)
+      setShowModal(false)
+    } catch (err) {
+      toast.error("Update failed!")
+    }
+  }
+
+  const pendingCount = activities.filter((a) => a.status === "pending" && !a.archive).length
+  const completeCount = activities.filter((a) => a.status === "complete" && !a.archive).length
+  const overdueCount = activities.filter((a) => a.status === "overdue" && !a.archive).length
+  const archiveCount = activities.filter((a) => a.archive).length
+  const totalTasks = pendingCount + completeCount + overdueCount
+  const completionPercentage = totalTasks ? (completeCount / totalTasks) * 100 : 0
+
+  const groupedData = activities.reduce(
+    (acc, activity) => {
+      if (!activity.date_started) return acc
+      if (!acc[activity.date_started]) {
+        acc[activity.date_started] = {
+          date: activity.date_started,
+          pending: 0,
+          complete: 0,
+          overdue: 0,
+        }
+      }
+      acc[activity.date_started][activity.status] += 1
+      return acc
+    },
+    {} as Record<string, { date: string; pending: number; complete: number; overdue: number }>,
+  )
+
+  const chartData = Object.values(groupedData)
+
+ return (
+    <div className="flex min-h-auto bg-gray-900 text-white">
+      
+      <Sidebar />
+      <ToastContainer />
+      
+     
+      <div className="sticky top-0 h-screen w-64 bg-blue-100 shadow-lg hidden md:block"></div>
+      <div className="flex-grow h-auto">
+  
+          <div className="w-full text-center">
+          <br />
+          <br />
+          <br />
+            <h1 className="text-4xl h-auto font-extrabold bg-gradient-to-r from-blue-500 to-cyan-300 bg-clip-text text-transparent drop-shadow-md">
+             Employee Profile
+            </h1>
+            <p className="text-sm text-gray-400 mt-2">Manage your daily tasks and track progress</p>
+          </div>
+
+        {/* TikTok-style Profile Header */}
+        <div className=" relative">
+          {/* Cover Photo/Background */}
+          <br />
+          <br />
+          <div className="h-auto bg-gray-900"></div>
+          <br />
+          <br />
+
+          {/* Profile Section */}
+          <div className="px-4 relative -mt-16 pb-4 border-b border-blue-900">
+            {loading ? (
+              <div className="flex justify-center items-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              <>
+           {/* Profile Image */}
+<div className="flex justify-center">
+  <div className="flex flex-col sm:flex-row items-center">
+    <div className="relative mx-auto sm:mx-0">
+      <img
+        src={imagePreview || "/default-avatar.png"}
+        alt="Profile"
+        className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-black object-cover"
+        onError={(e) => {
+          e.currentTarget.src = "/default-avatar.png";
+        }}
+      />
+      <button
+        onClick={() => setShowModal(true)}
+        className="absolute bottom-0 right-0 bg-blue-500 text-white p-1.5 rounded-full"
+      >
+        <Edit size={18} />
+      </button>
+    </div>
+
+    {/* User Info */}
+    <div className="mt-4 sm:mt-0 sm:ml-4 text-center sm:text-left">
+      <h2 className="text-xl font-bold">@{username}</h2>
+      <p className="text-gray-400 text-sm">{email}</p>
+    </div>
+  </div>
+</div>
+
+                {/* Stats */}
+                <div className="flex justify-around mt-6 text-center">
+                  <div>
+                    <div className="font-bold">{totalTasks}</div>
+                    <div className="text-gray-400 text-xs">Tasks</div>
+                  </div>
+                  <div>
+                    <div className="font-bold">{completeCount}</div>
+                    <div className="text-gray-400 text-xs">Completed</div>
+                  </div>
+                  <div>
+                    <div className="font-bold">{pendingCount}</div>
+                    <div className="text-gray-400 text-xs">Pending</div>
+                  </div>
+                  <div>
+                    <div className="font-bold">{overdueCount}</div>
+                    <div className="text-gray-400 text-xs">Overdue</div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex border-b border-gray-800">
+            <button
+              onClick={() => setActiveTab("tasks")}
+              className={`flex-1 py-3 text-center font-medium text-sm ${
+                activeTab === "tasks" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"
+              }`}
+            >
+              <Grid size={18} className="inline mr-1" />
+              Tasks
+            </button>
+            <button
+              onClick={() => setActiveTab("stats")}
+              className={`flex-1 py-3 text-center font-medium text-sm ${
+                activeTab === "stats" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"
+              }`}
+            >
+              <Bookmark size={18} className="inline mr-1" />
+              Stats
+            </button>
+           
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-4">
+          {activeTab === "tasks" && (
+            <div className="space-y-4">
+             
+
+              {/* Task Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Pending Tasks */}
+                <div className="bg-gray-800 rounded-xl p-4 border border-gray-800">
+                  <div className="flex items-center mb-3">
+                    <Clock size={18} className="text-yellow-500 mr-2" />
+                    <span className="font-medium">Pending Tasks</span>
+                    <span className="ml-auto bg-gray-800 text-yellow-500 px-2 py-0.5 rounded-full text-xs">
+                      {pendingCount}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm">Tasks waiting to be completed</p>
+                  <div className="flex mt-3 space-x-2"></div>
+                </div>
+
+                {/* Completed Tasks */}
+                <div className="bg-gray-800 rounded-xl p-4 border border-gray-800">
+                  <div className="flex items-center mb-3">
+                    <CheckCircle size={18} className="text-green-500 mr-2" />
+                    <span className="font-medium">Completed Tasks</span>
+                    <span className="ml-auto bg-gray-800 text-green-500 px-2 py-0.5 rounded-full text-xs">
+                      {completeCount}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm">Tasks you've successfully completed</p>
+                  <div className="flex mt-3"></div>
+                </div>
+
+                {/* Overdue Tasks */}
+                <div className="bg-gray-800 rounded-xl p-4 border border-gray-800">
+                  <div className="flex items-center mb-3">
+                    <AlertTriangle size={18} className="text-red-500 mr-2" />
+                    <span className="font-medium">Overdue Tasks</span>
+                    <span className="ml-auto bg-gray-800 text-red-500 px-2 py-0.5 rounded-full text-xs">
+                      {overdueCount}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm">Tasks that need immediate attention</p>
+                  <div className="flex mt-3"></div>
+                </div>
+
+                {/* Archived Tasks */}
+                <div className="bg-gray-800 rounded-xl p-4 border border-gray-800">
+                  <div className="flex items-center mb-3">
+                    <Archive size={18} className="text-gray-400 mr-2" />
+                    <span className="font-medium">Archived Tasks</span>
+                    <span className="ml-auto bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full text-xs">
+                      {archiveCount}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm">Tasks you've archived for later</p>
+                  <div className="flex mt-3"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "stats" && (
+            <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+              <h3 className="text-lg font-medium mb-4">Activity Overview</h3>
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#1F2937",
+                        borderColor: "#374151",
+                        color: "white",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="complete"
+                      stroke="#10B981"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="pending"
+                      stroke="#FBBF24"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="overdue"
+                      stroke="#EF4444"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "archived" && (
+            <div className="text-center py-12">
+              <Archive size={48} className="mx-auto text-gray-600 mb-4" />
+              <h3 className="text-lg font-medium">No Archived Tasks</h3>
+              <p className="text-gray-400 text-sm mt-2">When you archive tasks, they'll appear here</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+    {/* Edit Profile Modal */}
+{showModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-md px-4">
+    <div className="w-full max-w-lg bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-3xl shadow-2xl p-8 text-white relative">
+      
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold tracking-wide">Edit Profile</h2>
+        <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-red-400 transition duration-200">
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* Profile Image */}
+      <div className="flex justify-center mb-6">
+        <div className="relative group w-fit">
+          <img
+            src={imagePreview || "/default-avatar.png"}
+            alt="Preview"
+            className="w-36 h-36 rounded-full object-cover border-4 border-gray-700 shadow-md transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              e.currentTarget.src = "/default-avatar.png";
+            }}
+          />
+          <label className="absolute bottom-0 right-0 bg-gradient-to-tr from-blue-600 to-blue-500 text-white p-2 rounded-full cursor-pointer shadow-lg hover:scale-105 transition duration-300">
+            <Edit size={18} />
+            <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+          </label>
+        </div>
+      </div>
+
+      {/* Form Fields */}
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm text-gray-300 mb-1 font-medium">Username</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Your username"
+            className="w-full px-4 py-2.5 bg-gray-800/80 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring focus:ring-blue-500/40 transition"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-1 font-medium">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="w-full px-4 py-2.5 bg-gray-800/80 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring focus:ring-blue-500/40 transition"
+          />
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-4 mt-8">
+        <button
+          onClick={() => setShowModal(false)}
+          className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 transition duration-200"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl shadow-md flex items-center gap-2 transition duration-300"
+        >
+          <Save size={18} /> Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+    </div>
+  )
+}
+
+export default authUser(TodoPage)

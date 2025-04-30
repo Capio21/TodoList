@@ -6,11 +6,13 @@ import axios from "axios";
 import Head from "next/head";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import Image from "next/image";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Toast notifications
+import { motion } from "framer-motion";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
@@ -18,122 +20,153 @@ export default function Login() {
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    setMessage("");
 
-    // Basic input validation
     if (!username || !password) {
-      setMessage("Username and password are required.");
+      toast.error("Username and password are required.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/login",
+      const response = await axios.post("https://infinitech-api5.site/api/login",
         { username, password },
         { withCredentials: true }
       );
 
       if (response.data.token) {
         sessionStorage.setItem("authToken", response.data.token);
-        response.data.usertype === "admin" ? router.push("/DashBoard") : router.push("/todolist");
+        toast.success("Login successful!");
+        
+        setTimeout(() => {
+          response.data.usertype === "admin"
+            ? router.push("/DashBoard")
+            : router.push("/todolist");
+        }, 3000); // Delay for 3 seconds to show success modal
       } else {
-        setMessage("Invalid credentials. Please try again.");
+        toast.error("Invalid credentials. Please try again.");
+        setLoading(false);
       }
     } catch (error: any) {
-      // Handle specific error messages
       if (error.response?.status === 401) {
-        setMessage("Invalid credentials. Please check your username and password.");
+        toast.error("Invalid credentials. Please check your username and password.");
       } else {
-        setMessage("Login failed. Please try again later.");
+        toast.error("Login failed. Please try again later.");
       }
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <>
+      <ToastContainer position="top-right" autoClose={3000} />
       <Head>
         <title>Login | Infinitech</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
   
-      {/* Background Image */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center bg-gray-900">
+      {/* Background Container */}
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-black px-4">
+        {/* Background Image */}
         <Image
           src="/cram.png"
-          alt="Task Management Background"
+          alt="Background"
           layout="fill"
           objectFit="cover"
-          className="absolute top-0 left-0 w-full h-full opacity-20"
+          className="absolute top-0 left-0 w-full h-full opacity-10"
         />
   
-        {/* Login Box */}
-        <div className="relative bg-gray-900/80 backdrop-blur-md p-8 rounded-lg shadow-lg w-96 border border-green-600">
-          <h2 className="text-3xl font-bold text-white text-center mb-6">Infini-Sign In</h2>
+        {/* Login Card */}
+        <div className="relative z-10 bg-white/30 backdrop-blur-md border border-blue-500 shadow-xl rounded-2xl p-8 w-full max-w-md">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img src="/infini.png" alt="Infinitech Logo" className="w-28 h-28 rounded-full shadow-lg object-cover" />
+          </div>
   
+          {/* Title */}
+          <h2 className="text-3xl font-bold text-center text-white mb-6 tracking-wide">
+            <span className="text-blue-400">INFINI</span>
+            <span className="mx-2 text-gray-200">|</span>
+            <span className="text-blue-100">Sign-in</span>
+          </h2>
+  
+          {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
+            {/* Username */}
             <div>
-              <label className="block text-gray-300 text-lg font-medium mb-2">Username</label>
+              <label className="block text-white font-semibold mb-2">Username</label>
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-green-500"
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  if (!inputValue.startsWith("INFINI-")) {
+                    setUsername("INFINI-" + inputValue);
+                  } else {
+                    setUsername(inputValue);
+                  }
+                }}
                 placeholder="Enter your username"
+                className="w-full px-4 py-3 rounded-lg bg-white/80 text-gray-800 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 required
               />
             </div>
   
-            {/* Password Field with Toggle */}
+            {/* Password */}
             <div className="relative">
-              <label className="block text-gray-300 text-lg font-medium mb-2">Password</label>
+              <label className="block text-white font-semibold mb-2">Password</label>
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring focus:ring-green-500 pr-12"
                 placeholder="Enter your password"
+                className="w-full px-4 py-3 pr-12 rounded-lg bg-white/80 text-gray-800 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 required
               />
               <button
                 type="button"
-                className="absolute right-4 top-11 text-gray-400 hover:text-white"
+                className="absolute right-4 top-10 text-gray-500 hover:text-blue-600"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOffIcon size={22} /> : <EyeIcon size={22} />}
               </button>
             </div>
   
-            {message && <p className="text-red-500 text-lg mt-2 text-center">{message}</p>}
-  
-            {/* Buttons */}
-            <div className="flex flex-col items-center space-y-3">
-              <button
-                type="submit"
-                className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg text-lg transition font-semibold"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign in"}
-              </button>
-  
-              <button
-                type="button"
-                className="w-full bg-gray-600 hover:bg-gray-500 text-white py-3 rounded-lg text-lg transition"
-                onClick={() => router.push("/")}
-              >
-                ⬅ Back to Landing Page
-              </button>
-            </div>
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg flex justify-center items-center transition duration-300"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </button>
           </form>
-
   
-          <p className="text-lg text-center text-gray-400 mt-4">
-            New here? <a href="/Signup" className="text-green-400 hover:underline">Create an account</a>
-          </p>
+          {/* Navigation */}
+          <div className="flex justify-between items-center mt-6 text-sm sm:text-base">
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="text-blue-300 hover:text-white transition  "
+            >
+              Back to Home
+            </button>
+            <a
+              href="/Signup"
+              className="text-blue-300 hover:text-white transition "
+            >
+              Create an account!
+            </a>
+          </div>
         </div>
       </div>
     </>
   );
+  
 }

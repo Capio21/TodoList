@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Head from "next/head";
-import TaskForm from "./form"; // Import TaskForm component
+import TaskForm from "./form";
 import Archive from "./Archive";
 import Adminbar from "../Components/adminsidebar";
 import authUser from "../utils/authUser";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = "https://infinitech-api5.site/api";
 
 interface Task {
   id: number;
@@ -25,24 +27,28 @@ interface Task {
   created_at: string;
   updated_at: string;
   archived?: boolean;
-  visibility?: string; // Added visibility property
+  visibility?: string;
+  tags: string;
+  user: string;
+
 }
 
 const Dashboard = () => {
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
   const [showTableModal, setShowTableModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 1;
-  const [expandedDescription, setExpandedDescription] = useState(false); // State for read more functionality
-
+  const itemsPerPage = 8;
   const totalPages = Math.ceil(tasks.length / itemsPerPage);
-  const currentTask = tasks[currentPage];
+  const currentTasks = tasks.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [actionToConfirm, setActionToConfirm] = useState<() => void>(() => () => { });
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const router = useRouter();
 
@@ -54,6 +60,7 @@ const Dashboard = () => {
         setTasks(response.data);
       } catch (error) {
         console.error("Error fetching tasks:", error);
+        toast.error("Error fetching tasks.");
       } finally {
         setLoading(false);
       }
@@ -61,7 +68,8 @@ const Dashboard = () => {
 
     fetchTasks();
   }, []);
-
+  const [showFull, setShowFull] = useState(false);
+  const toggleShow = () => setShowFull(!showFull);
   const handleLogout = () => {
     sessionStorage.removeItem("authToken");
     sessionStorage.removeItem("userRole");
@@ -70,33 +78,44 @@ const Dashboard = () => {
 
   const editTask = (task: Task) => {
     setEditingTask(task);
-    setShowEditModal(true);
-    setShowTableModal(false); // Close the modal when editing a task
+    setShowTableModal(true);
   };
 
   const archiveTask = async (taskId: number) => {
     try {
       const response = await axios.put(`${API_BASE_URL}/tasks/${taskId}/archive`);
       if (response.status === 200) {
-        alert("Task archived successfully!");
+        toast.success("Task archived successfully!");
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
         setArchivedTasks((prevArchived) => [...prevArchived, response.data]);
       }
     } catch (error) {
       console.error("Error archiving task:", error);
-      alert("Failed to archive task.");
+      toast.error("Failed to archive task.");
     }
   };
 
   const deleteTask = async (taskId: number) => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      try {
-        await axios.delete(`${API_BASE_URL}/tasks/${taskId}`);
-        setTasks(tasks.filter((task) => task.id !== taskId));
-      } catch (error) {
-        console.error("Error deleting task:", error);
-      }
+    try {
+      await axios.delete(`${API_BASE_URL}/tasks/${taskId}`);
+      setTasks(tasks.filter((task) => task.id !== taskId));
+      toast.success("Task deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("Failed to delete task.");
     }
+  };
+
+  const confirmDeleteTask = (taskId: number) => {
+    setConfirmMessage("Are you sure you want to delete this task?");
+    setActionToConfirm(() => () => deleteTask(taskId));
+    setConfirmModalOpen(true);
+  };
+
+  const confirmArchiveTask = (taskId: number) => {
+    setConfirmMessage("Are you sure you want to archive this task?");
+    setActionToConfirm(() => () => archiveTask(taskId));
+    setConfirmModalOpen(true);
   };
 
   const toggleVisibility = async (taskId: number) => {
@@ -105,8 +124,10 @@ const Dashboard = () => {
       await axios.put(`${API_BASE_URL}/tasks/${taskId}/toggle-visibility`);
       const updatedTasks = await axios.get(`${API_BASE_URL}/notArchive`);
       setTasks(updatedTasks.data);
+      toast.success("Task visibility updated!");
     } catch (error) {
       console.error("Error updating visibility:", error);
+      toast.error("Failed to update visibility.");
     } finally {
       setLoading(false);
     }
@@ -124,171 +145,235 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <>
       <Head>
         <title>Users List | Infi-Admin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-  
-      <div className="flex min-h-screen bg-gray-800 text-white">
+
+      <div className="flex min-h-screen bg-white text-gray-800">
+        <ToastContainer position="top-right" autoClose={3000} />
         <Adminbar />
-        <div className="container mx-auto p-4">
-          <div className="w-full space-y-10 z-40 rounded-lg shadow-lg">
-            <div>
+        <div className="sticky top-0 h-screen w-64 bg-blue-100 shadow-lg hidden md:block"></div>
+
+        <main className="flex-1 p-4 md:p-6 lg:p-10">
+          <div className="bg-white rounded-lg shadow-xl p-4 md:p-6 lg:p-10 space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-center">
               <br />
+              <br />
+              <h1 className="text-xl md:text-4xl font-bold text-blue-800 text-center">
+                TASK MANAGER <span className="text-blue-800 font-bold">| Admin</span>
+              </h1>
+
+
               <button
-        onClick={() => setShowTableModal(true)}
-        className="px-4 py-2 text-base sm:text-lg font-semibold text-white bg-green-600 border-2 border-gray-800 rounded-lg shadow-md transition-all duration-300 hover:bg-white hover:text-green-600 hover:border-green-600 hover:shadow-lg active:bg-green-500 active:shadow-none active:translate-y-1"
-      >
-        View Task 
-      </button>
-
-      <button
-        onClick={() => setShowArchiveModal(true)}
-        className="px-4 py-2 text-base sm:text-lg font-semibold text-white bg-green-600 border-2 border-gray-800 rounded-lg shadow-md transition-all duration-300 hover:bg-white hover:text-green-600 hover:border-green-600 hover:shadow-lg active:bg-green-500 active:shadow-none active:translate-y-1"
-      >
-        View Archived
-      </button>
-  
-              <br />
-              <br />
-              <TaskForm tasks={tasks} setTasks={setTasks} editingTask={editingTask} setEditingTask={setEditingTask} />
-            </div>
-          </div>
-        </div>
-        {showTableModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-    <div
-      className="relative p-4 sm:p-8 rounded-lg border-4 border-green-800 shadow-lg bg-gray-700 w-full max-w-lg sm:max-w-4xl h-auto transition-all duration-300"
-      style={{ translate: "-6px -6px" }}
-    >
-      <div className="flex justify-between items-center mb-4 sm:mb-6">
-        <div className="text-lg sm:text-xl font-extrabold bg-gray-600 px-4 sm:px-8 py-2 sm:py-4 border-b-4 border-green-800 text-white rounded-lg shadow-lg">
-          Task Table
-        </div>
-        <button
-          onClick={() => setShowTableModal(false)}
-          className="text-white bg-green-600 rounded px-4 sm:px-6 py-2 sm:py-3"
-        >
-          Close
-        </button>
-      </div>
-
-      <div className="max-h-80 sm:max-h-96 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-4 sm:gap-6">
-          {currentTask && (
-            <div
-              key={currentTask.id}
-              className="relative p-4 sm:p-6 rounded-lg border-4 border-green-800 shadow-md bg-gray-600 transition-all duration-300 text-center"
-            >
-              <span
-                className={`absolute top-2 right-2 px-2 sm:px-3 py-1 text-xs sm:text-sm font-bold text-white rounded-md ${
-                  currentTask.status === 'done' ? 'bg-green-600' :
-                  currentTask.status === 'pending' ? 'bg-yellow-500' :
-                  currentTask.status === 'overdue' ? 'bg-red-600' :
-                  'bg-gray-500'
-                }`}
+                onClick={() => setShowTableModal(true)}
+                className="mt-4 md:mt-0 px-4 py-2 text-base font-semibold text-white bg-blue-600 border border-blue-700 rounded-md shadow-sm hover:bg-blue-700 transition duration-300"
               >
-                {currentTask.status.toUpperCase()}
-              </span>
-
-              <h4 className="text-lg sm:text-xl font-bold text-white">{currentTask.title}</h4>
-              <p className="text-gray-300 text-sm sm:text-base">
-                {expandedDescription ? currentTask.description : `${currentTask.description.substring(0, 120)}...`}
-                {currentTask.description.length > 120 && (
-                  <button
-                    onClick={() => setExpandedDescription(!expandedDescription)}
-                    className="text-blue-400 hover:underline ml-1"
-                  >
-                    {expandedDescription ? "Read Less" : "Read More"}
-                  </button>
-                )}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-300"><strong>Deadline:</strong> {currentTask.deadline}</p>
-              <p className="text-xs sm:text-sm text-gray-300"><strong>Started:</strong> {currentTask.time_started}</p>
-              <p className="text-xs sm:text-sm text-gray-300"><strong>Ended:</strong> {currentTask.time_ended}</p>
-
-              <div className="mt-4 sm:mt-6 flex flex-wrap gap-2 sm:gap-4 justify-center">
-                <button
-                  onClick={() => { editTask(currentTask); setShowTableModal(false); }}
-                  className="py-2 px-4 sm:px-5 border-4 border-green-800 shadow-md bg-green-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
-                >
-                  ✏️ Edit
-                </button>
-                <button
-                  onClick={() => deleteTask(currentTask.id)}
-                  className="py-2 px-4 sm:px-5 border-4 border-green-800 shadow-md bg-red-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
-                >
-                  🗑️ Delete
-                </button>
-                <button
-                  onClick={() => archiveTask(currentTask.id)}
-                  className="py-2 px-4 sm:px-5 border-4 border-green-800 shadow-md bg-blue-600 text-white transition-all duration-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_#000] flex-shrink-0"
-                >
-                  📦 Archive
-                </button>
-                <button
-                  onClick={() => toggleVisibility(currentTask.id)}
-                  disabled={loading}
-                  className={`py-2 px-4 sm:px-5 border-4 border-green-800 shadow-md ${
-                    currentTask.visibility === "visible" ? "bg-green-600" : "bg-gray-500"
-                  } text-white transition-all duration-300 flex-shrink-0`}
-                >
-                  {currentTask.visibility === "visible" ? "🔵 Visible" : "⚫ Invisible"}
-                </button>
-              </div>
+                + Add Task
+              </button>
             </div>
-          )}
+
+            {/* Tab Navigation */}
+            {/* Mobile Dropdown */}
+            <div className="block md:hidden mb-4">
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value)}
+                className="w-full px-4 py-2 rounded bg-blue-200 text-gray-800"
+              >
+                <option value="active">Active Tasks</option>
+                <option value="archived">Archived Tasks</option>
+              </select>
+            </div>
+
+            {/* Desktop Buttons */}
+            <div className="hidden md:flex flex-row space-x-4 mb-4">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`flex-1 px-4 py-2 rounded ${activeTab === 'active' ? 'bg-blue-600 text-white' : 'bg-blue-200 text-gray-800'}`}
+              >
+                Active Tasks
+              </button>
+              <button
+                onClick={() => setActiveTab('archived')}
+                className={`flex-1 px-4 py-2 rounded ${activeTab === 'archived' ? 'bg-blue-600 text-white' : 'bg-blue-200 text-gray-800'}`}
+              >
+                Archived Tasks
+              </button>
+            </div>
+
+
+            {/* Task Display */}
+            {activeTab === 'active' ? (
+          <>
+          {/* Table for Desktop */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-800 bg-white border border-blue-300 rounded-lg shadow-md">
+              <thead className="bg-blue-600 text-white">
+                <tr>
+                  <th className="px-2 py-3 text-center">Task Name</th>
+                  <th className="px-2 py-3 text-center">Task Details</th>
+                  <th className="px-2 py-3 text-center">Assigned To</th>
+                  <th className="px-2 py-3 text-center">Target Time</th>
+                  <th className="px-2 py-3 text-center">Time Ended</th>
+                  <th className="px-2 py-3 text-center">Due Date</th>
+                  <th className="px-2 py-3 text-center">Status</th>
+                  <th className="px-2 py-3 text-center">Tags</th>
+                  <th className="px-2 py-3 text-center">Visibility</th>
+                  <th className="px-2 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentTasks.map((task) => (
+                  <tr key={task.id} className="border-t border-blue-300 hover:bg-blue-50">
+                    <td className="px-2 py-3 font-bold text-center">{task.title}</td>
+                    <td className="px-2 py-3 font-bold text-center">
+      {task.description.length > 50 ? (
+        <>
+          {showFull ? task.description : `${task.description.slice(0, 10)}...`}
+          <button
+            className="text-blue-500 underline ml-1"
+            onClick={toggleShow}
+          >
+            {showFull ? 'Show less' : 'Show more'}
+          </button>
+        </>
+      ) : (
+        task.description
+      )}
+    </td>
+                    <td className="px-2 py-3 font-bold text-center">{task.user?.username}</td>
+                    <td className="px-2 py-3 font-bold text-center">{task.deadline}</td>
+                    <td className="px-2 py-3 font-bold text-center">{task.time_started}</td>
+                    <td className="px-2 py-3 font-bold text-center">{task.time_ended}</td>
+                    <td className="px-2 py-3 font-bold text-center">
+                      <span className={`px-3 py-1 rounded text-white ${task.status === "done" ? "bg-green-600" :
+                        task.status === "pending" ? "bg-yellow-500" :
+                          task.status === "overdue" ? "bg-red-600" : "bg-gray-500"
+                        }`}>
+                        {task.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3 font-bold text-center">{task.tags}</td>
+                    <td className="px-2 py-3 font-bold text-center">
+                      {task.visibility === "visible" ? "🔵 Visible" : "⚫ Invisible"}
+                    </td>
+                    <td className="px-2 py-3 text-center space-x-1">
+                      <button onClick={() => editTask(task)} className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">✏️ Edit</button>
+                      <button onClick={() => confirmDeleteTask(task.id)} className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">🗑️ Delete</button>
+                      <button onClick={() => confirmArchiveTask(task.id)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">📦 Archive</button>
+                      <button onClick={() => toggleVisibility(task.id)} disabled={loading} className={`px-2 py-1 rounded text-white ${task.visibility === "visible" ? "bg-green-600" : "bg-gray-500"}`}>
+                        {task.visibility === "visible" ? "Hide" : "Show"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        
+          {/* Card Layout for Mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:hidden">
+            {currentTasks.map((task) => (
+              <div key={task.id} className="bg-white border border-blue-300 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
+                <h2 className="text-lg font-semibold text-center">{task.title}</h2>
+                <p className="text-gray-600 text-center">{task.description}</p>
+                <div className="mt-2 text-center">
+                          <span className={`px-2 py-1 rounded text-white ${task.status === "done" ? "bg-green-600" :
+            task.status === "pending" ? "bg-yellow-500" :
+              task.status === "overdue" ? "bg-red-600" : "bg-gray-500"
+            }`}>
+            {task.status.toUpperCase()}
+          </span>
+        </div>
+        <div className="mt-2 text-center">
+          <p className="font-bold"><strong>Due Date:</strong> {task.deadline}</p>
+          <p className="font-bold"><strong>Visibility:</strong> {task.visibility === "visible" ? "🔵 Visible" : "⚫ Invisible"}</p>
+        </div>
+        <div className="mt-4 flex justify-between">
+          <button onClick={() => editTask(task)} className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">✏️ Edit</button>
+          <button onClick={() => confirmDeleteTask(task.id)} className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">🗑️ Delete</button>
+          <button onClick={() => confirmArchiveTask(task.id)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">📦 Archive</button>
+          <button onClick={() => toggleVisibility(task.id)} disabled={loading} className={`px-2 py-1 rounded text-white ${task.visibility === "visible" ? "bg-green-600" : "bg-gray-500"}`}>
+            {task.visibility === "visible" ? "Hide" : "Show"}
+          </button>
         </div>
       </div>
-
-      <div className="flex justify-between mt-4 sm:mt-6">
-        <button
-          onClick={handlePreviousPage}
-          disabled={currentPage === 0}
-          className="py-2 px-4 sm:py-3 sm:px-6 bg-green-600 text-white rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages - 1}
-          className="py-2 px-4 sm:py-3 sm:px-6 bg-green-600 text-white rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+    ))}
   </div>
-)}
+</>
+            ) : (
+              <div className="pt-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-2">Archived Tasks</h2>
+                <div className="max-h-96 overflow-y-auto bg-blue-100 p-4 rounded-lg">
+                  <Archive />
+                </div>
+              </div>
+            )}
 
+            {/* Pagination for Active Tasks */}
+            {activeTab === 'active' && (
+              <div className="flex justify-between items-center mt-6">
+                <button onClick={handlePreviousPage} disabled={currentPage === 0} className="py-2 px-4 bg-blue-600 text-white rounded disabled:opacity-50">Previous</button>
+                <button onClick={handleNextPage} disabled={currentPage === totalPages - 1} className="py-2 px-4 bg-blue-600 text-white rounded disabled:opacity-50">Next</button>
+              </div>
+            )}
+          </div>
+        </main>
 
-        {showArchiveModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-700 p-8 rounded-lg shadow-lg text-white h-auto ">
-              <h3 className="text-xl font-bold text-center mb-4">Archived Tasks</h3>
-              <Archive />
-              <button onClick={() => setShowArchiveModal(false)} className="w-full bg-green-600 hover:bg-green-500 py-2 px-4 rounded mt-4">Close</button>
+        {/* Task Modal */}
+        {showTableModal && (
+          <div className="fixed inset-y-0 right-0 w-[90%] md:w-[600px] bg-white p-6 shadow-2xl border-l border-blue-500 z-50 overflow-y-auto transition duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Create Task</h3>
+              <button onClick={() => setShowTableModal(false)} className="text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Close</button>
+            </div>
+
+            <div className="space-y-4">
+              <TaskForm
+                tasks={tasks}
+                setTasks={setTasks}
+                editingTask={editingTask}
+                setEditingTask={setEditingTask}
+              />
             </div>
           </div>
         )}
-  
-        {showLogoutModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-700 p-6 rounded-lg shadow-lg text-white w-96">
-              <h3 className="text-xl font-bold text-center mb-4">Confirm Logout</h3>
-              <button onClick={handleLogout} className="w-full bg-red-600 hover:bg-red-500 py-2 px-4 rounded transition">
-                ✅ Logout
-              </button>
-              <button onClick={() => setShowLogoutModal(false)} className="w-full bg-gray-600 hover:bg-gray-500 py-2 px-4 rounded mt-2">
-                Cancel
-              </button>
+
+        {/* Confirmation Modal */}
+        {confirmModalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded shadow-lg">
+              <h2 className="text-lg font-bold mb-4">Confirmation</h2>
+              <p>{confirmMessage}</p>
+              <div className="flex justify-end mt-4">
+                <button onClick={() => setConfirmModalOpen(false)} className="mr-2 px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button onClick={() => {
+                  actionToConfirm();
+                  setConfirmModalOpen(false);
+                }} className="px-4 py-2 bg-blue-600 text-white rounded">Confirm</button>
+              </div>
             </div>
           </div>
         )}
       </div>
     </>
   );
-}
-export default authUser (Dashboard);
+};
+
+export default authUser(Dashboard);
