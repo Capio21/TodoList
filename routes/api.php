@@ -3,12 +3,13 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\AdminMemoController;
 use App\Http\Controllers\AdminProjectController;
+
 use App\Http\Controllers\MyToDoListController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\NotificationController;
-
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\ProgressController;
 use Illuminate\Support\Facades\Broadcast;
 use Pusher\Pusher;
@@ -53,7 +54,7 @@ Route::delete('admins/{id}', [AuthController::class, 'deleteAdmin']);
 Route::get('/users', [AuthController::class, 'getUsers']);
 Route::put('/users/{id}', [AuthController::class, 'updateUser']);
 Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
-// delete archive
+Route::post('/check-availability', [AuthController::class, 'checkAvailability']);
 
 
 
@@ -171,3 +172,39 @@ Route::get('/pusher-test', function () {
         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
 });
+
+Route::get('/users/{id}/tasks', [AdminProjectController::class, 'getUserTasks']);
+// Route::post('/generate-report', [AdminProjectController::class, 'generateReport']);
+
+
+
+
+
+
+
+Route::get('/files', [FileController::class, 'index']);
+Route::post('/files', [FileController::class, 'store']);
+Route::put('/files/{id}/excel', [FileController::class, 'updateExcel']);
+Route::get('/files/{id}', [FileController::class, 'show']);
+Route::delete('/files/{id}', [FileController::class, 'destroy']);
+
+
+
+
+Route::get('memos', [AdminMemoController::class, 'index']);
+
+// Show the form for creating a new memo
+Route::post('/memos', [AdminMemoController::class, 'create']); // not store
+
+
+// Store a new memo
+Route::post('memos', [AdminMemoController::class, 'store']);
+
+// Show the form for editing a specific memo
+Route::get('memos/{id}/edit', [AdminMemoController::class, 'edit']);
+
+// Update a specific memo
+Route::put('memos/{id}', [AdminMemoController::class, 'update']);
+
+// Delete a specific memo
+Route::delete('memos/{id}', [AdminMemoController::class, 'destroy']);

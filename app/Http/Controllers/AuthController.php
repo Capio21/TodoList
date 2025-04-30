@@ -4,28 +4,29 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Notification;
-use App\Events\NotificationSent;
+// use App\Models\Notification;
+// use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
+
 class AuthController extends Controller
 {
     // POGI SI Ariel James De Guzman
-    private function sendNotification($message, $userId)
-    {
+    // private function sendNotification($message, $userId)
+    // {
 
-        $notification = Notification::create([
-            'user_id' => $userId,
-            'message' => $message,
-            'status' => 'unread',
-        ]);
+    //     $notification = Notification::create([
+    //         'user_id' => $userId,
+    //         'message' => $message,
+    //         'status' => 'unread',
+    //     ]);
 
-        // Broadcast the event
-        broadcast(new NotificationSent($notification))->toOthers();
-    }
+    //     // Broadcast the event
+    //     broadcast(new NotificationSent($notification))->toOthers();
+    // }
     public function getUsers()
     {
         // Filter users by usertype 'admin'
@@ -264,7 +265,7 @@ class AuthController extends Controller
         $user->save();
     
         // Send notification after profile update
-        $this->sendNotification($user->username . ' updated their admin profile', $user->id);
+       
     
         return response()->json([
             'message' => 'Profile updated successfully',
@@ -308,6 +309,20 @@ class AuthController extends Controller
         return response()->json(['message' => 'Admin deleted successfully'], 200);
     }
 
+    public function checkAvailability(Request $request)
+    {
+        $request->validate([
+            'username' => 'string|min:6',
+            'email' => 'email',
+        ]);
 
+        $usernameAvailable = !User ::where('username', $request->username)->exists();
+        $emailAvailable = !User ::where('email', $request->email)->exists();
+
+        return response()->json([
+            'usernameAvailable' => $usernameAvailable,
+            'emailAvailable' => $emailAvailable,
+        ]);
+    }
 
 }

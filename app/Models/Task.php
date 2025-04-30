@@ -12,6 +12,7 @@ class Task extends Model
     protected $fillable = [
         'title',
         'user_id',
+        'username',
         'description',
         'time_started',
         'time_ended',
@@ -28,4 +29,10 @@ class Task extends Model
         'time_ended',
         'deadline',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
 }

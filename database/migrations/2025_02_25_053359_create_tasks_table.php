@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Schema\greenprint;
 use Illuminate\Support\Facades\Schema;
 
 class CreateTasksTable extends Migration
@@ -13,7 +13,7 @@ class CreateTasksTable extends Migration
      */
     public function up()
     {
-        Schema::create('tasks', function (Blueprint $table) {
+        Schema::create('tasks', function (greenprint $table) {
             $table->id();
             $table->string('title');
             $table->text('description');

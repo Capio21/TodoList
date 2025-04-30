@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Notification;
+use App\Events\NotificationSent;
+
 
 class ActivityController extends Controller
 {
@@ -24,7 +26,7 @@ class ActivityController extends Controller
         ]);
 
         // Broadcast the event
-        // broadcast(new NotificationSent($notification))->toOthers();
+        broadcast(new NotificationSent($notification))->toOthers();
     }
     // Fetch all activities (including filtering by status)
     public function index(Request $request, $authToken)
@@ -44,7 +46,7 @@ class ActivityController extends Controller
         }
     
         // Fetch activities belonging to the authenticated user
-        $query = Activity::where('user_id', $user->id);
+        $query = Activity::where('user_id', $user->id)->orWhere('collaborator', $user->id);
     
         // Optional: Filter by status if provided
         if ($request->has('status')) {
@@ -53,7 +55,7 @@ class ActivityController extends Controller
 
         $records = $query->get();
         foreach ($records as $record) {
-            $record['collaborator_name'] = User::find($record->collaborator)->username;
+            $record['collaborator_name'] = $record->collaborator ? User::find($record->collaborator)->username : "";
         }
         
         return response()->json($records, 200);
@@ -75,27 +77,38 @@ class ActivityController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'nullable|array', // Must be an array
+            'description.*' => 'nullable|string', // Each item in array must be string
             'date_started' => 'required|date',
             'due_date' => 'required|date|after_or_equal:date_started',
             'tags' => 'nullable|string',
             'status' => 'required|in:pending,complete,overdue',
             'archive' => 'boolean',
-            'user_id' => 'required|exists:users,id' ,// Ensure the user exists
-             'collaborators' => 'required|exists:users,id'
-
+            'user_id' => 'required|exists:users,id',
+            'collaborators' => 'nullable|exists:users,id'
         ]);
-
-        $validated = $validator->validated();
-        $validated['collaborator'] = $validated['collaborators'][0];
     
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
+    
+        $validated = $validator->validated();
+    
+        // ✅ Convert description array to JSON before saving
+        if (isset($validated['description']) && is_array($validated['description'])) {
+            $validated['description'] = json_encode($validated['description']);
+        }
+    
+        // Handle collaborator field
+        if (isset($validated['collaborators'])) {
+            $validated['collaborator'] = $validated['collaborators'][0];
+        }
+    
         $activity = Activity::create($validated);
+    
         return response()->json($activity, 201);
     }
+    
     
 
 
@@ -118,14 +131,15 @@ class ActivityController extends Controller
     
             $validator = Validator::make($request->all(), [
                 'title' => 'sometimes|required|string|max:255',
-                'description' => 'nullable|string',
+                'description' => 'nullable|array', // Must be an array
+                'description.*' => 'nullable|string', 
                 'date_started' => 'sometimes|required|date',
                 'due_date' => 'sometimes|required|date|after_or_equal:date_started',
                 'tags' => 'nullable|string',
                 'status' => 'sometimes|required|in:pending,complete,overdue',
                 'archive' => 'boolean',
                 'user_id' => 'required|exists:users,id',// Ensure user exists
-                  'collaborator' => 'required|exists:users,id'
+                // 'collaborator' => 'required|exists:users,id'
             ]);
     
             if ($validator->fails()) {
@@ -212,21 +226,32 @@ public function restore($id)
 
 }
 
-public function markAsOverdue (Request $request, $id)
+public function markAsOverdue(Request $request, $id)
 {
     // Find the activity by ID
     $activity = Activity::find($id);
-
+    
     if (!$activity) {
         return response()->json(['message' => 'Activity not found'], 404);
+    }
+
+    // Prevent marking as overdue if the activity is already overdue
+    if ($activity->status === 'overdue') {
+        return response()->json(['message' => 'Activity is already overdue and cannot be marked again'], 200);
     }
 
     // Update the status to 'overdue'
     $activity->status = 'overdue';
     $activity->save();
 
-    $this->sendNotification('Your personal task is going to overdue '. $activity->user_id . ' Deadline: '. $activity->due_date . ' Status: '. $activity->status . '', $activity->user_id, $activity->description );
-    return response()->json($activity, 201); // Return the created task with a 201 status code
+    // Send notification about the overdue status
+    $this->sendNotification(
+        'Your personal task is going to overdue ' . $activity->user_id . 
+        ' | Deadline: ' . $activity->due_date . 
+        ' | Status: ' . $activity->status, 
+        $activity->user_id, 
+        $activity->description
+    );
 
     return response()->json(['message' => 'Activity marked as overdue', 'activity' => $activity], 200);
 }
